@@ -261,10 +261,10 @@ void MONITOR_Tasks(void) {
                 }
                 monitorData.wlan_net_hdl = TCPIP_STACK_IndexToNet(WLAN_NET);
                 monitorData.eth_net_hdl = TCPIP_STACK_IndexToNet(ETH_NET);
-                TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);
-                TCPIP_DHCPS_Disable(monitorData.eth_net_hdl);
-                TCPIP_DHCP_Disable(monitorData.wlan_net_hdl);
-                TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
+//                TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);
+//                TCPIP_DHCPS_Disable(monitorData.eth_net_hdl);
+//                TCPIP_DHCP_Disable(monitorData.wlan_net_hdl);
+//                TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
                 monitorData.state = MONITOR_STATE_SERVICE_TASKS;
             }
             break;
