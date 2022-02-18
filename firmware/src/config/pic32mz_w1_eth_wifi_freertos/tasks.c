@@ -300,7 +300,7 @@ void SYS_Tasks ( void )
 
     xTaskCreate( _SYS_WIFI_Task,
         "SYS_WIFI_Tasks",
-        SYS_WIFI_RTOS_SIZE,
+        4096, //SYS_WIFI_RTOS_SIZE,
         (void*)NULL,
         SYS_WIFI_RTOS_PRIORITY,
         (TaskHandle_t*)NULL
