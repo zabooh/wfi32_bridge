@@ -39,6 +39,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "system/console/sys_console.h"
+#include "definitions.h"
 
 /*
 *********************************************************************************************************
@@ -55,16 +56,39 @@
 * Note(s)     : none.
 *********************************************************************************************************
 */
+
+extern EXCEPT_MSG last_expt_msg;
+
 void vApplicationStackOverflowHook( TaskHandle_t pxTask, signed char *pcTaskName )
 {
    ( void ) pcTaskName;
    ( void ) pxTask;
 
+   sprintf(last_expt_msg.msg,            
+            "===> Stack Overrun <===\n\r"            
+            "Task: %s \r\n", 
+           pcTaskName);
+                      
+   last_expt_msg.magic = MAGIC_CODE;
+   
    /* Run time task stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook  function is
    called if a task stack overflow is detected.  Note the system/interrupt
    stack is not checked. */
    taskDISABLE_INTERRUPTS();
+   
+    while (1) {
+        SYSKEY = 0x00000000;
+        SYSKEY = 0xAA996655;
+        SYSKEY = 0x556699AA;
+        RSWRSTSET = _RSWRST_SWRST_MASK;
+        RSWRST;
+        Nop();
+        Nop();
+        Nop();
+        Nop();
+    }   
+   
    for( ;; );
 }
 

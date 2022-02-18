@@ -261,6 +261,10 @@ void MONITOR_Tasks(void) {
                 }
                 monitorData.wlan_net_hdl = TCPIP_STACK_IndexToNet(WLAN_NET);
                 monitorData.eth_net_hdl = TCPIP_STACK_IndexToNet(ETH_NET);
+                TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);
+                TCPIP_DHCPS_Disable(monitorData.eth_net_hdl);
+                TCPIP_DHCP_Disable(monitorData.wlan_net_hdl);
+                TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
                 monitorData.state = MONITOR_STATE_SERVICE_TASKS;
             }
             break;
@@ -291,6 +295,22 @@ time_t time(time_t * time_r) { /* seconds since 00:00:00 Jan 1 1970 */
     //        *time_r = seconds_total;
     //    }
     return monitorData.seconds_total;
+}
+
+volatile int peng1 = 1;
+volatile int peng2 = 1;
+
+void DisableAllDHCPx(void){
+    int abc[2048];
+    int ix;
+    
+    for(ix=0;ix<2048;ix++)abc[ix]=0xAFFEAFFE;    
+    peng1 = abc[peng1];
+    
+        TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);
+        TCPIP_DHCPS_Disable(monitorData.eth_net_hdl);
+        TCPIP_DHCP_Disable(monitorData.wlan_net_hdl);
+        TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
 }
 
 /*******************************************************************************

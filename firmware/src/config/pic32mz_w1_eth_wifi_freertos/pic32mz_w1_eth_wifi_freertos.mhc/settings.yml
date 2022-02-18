@@ -1,7 +1,7 @@
 configName: pic32mz_w1_eth_wifi_freertos
 folderName: pic32mz_w1_curiosity_freertos
 format_version: v1.0
-frameworkPath: ..
+frameworkPath: ../../../frameworks/app
 processor: PIC32MZ1025W104132
 projectName: pic32mz_w1_curiosity_freertos
 settings:

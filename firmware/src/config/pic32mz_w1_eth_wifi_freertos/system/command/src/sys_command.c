@@ -194,6 +194,8 @@ static void     CommandHeap(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);
 static void     CommandSton(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Status On
 static void     CommandStof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Satus Off
 
+static void     CommandDhof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // 
+
 static int      StringToArgs(char *str, char *argv[], size_t argvSize); 
 static void     ParseCmdBuffer(SYS_CMD_IO_DCPT* pCmdIO);      // parse the command buffer
 
@@ -229,6 +231,7 @@ static const SYS_CMD_DESCRIPTOR    _builtinCmdTbl[]=
     {"dump",    CommandDump,    ": dump memory"},        
     {"ston",    CommandSton,    ": status on"},        
     {"stof",    CommandStof,    ": status off"},            
+    {"dhof",    CommandDhof,    ": all dhcp services off"},            
     {"help",    CommandHelp,    ": help"},
 };
 
@@ -881,6 +884,14 @@ static void CommandStof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
     (*pCmdIO->pCmdApi->msg)(cmdIoParam, LINE_TERM " *** Status Off ***\r\n" );
     MONITOR_SetDisplayStatus(false);
 }
+
+void DisableAllDHCPx(void);
+
+static void CommandDhof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
+{
+    DisableAllDHCPx();
+}
+
 
 static void CommandHeap(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv) {
     HeapStats_t xHeapStats;
