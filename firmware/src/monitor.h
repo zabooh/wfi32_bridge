@@ -56,6 +56,8 @@ extern "C" {
 #define WLAN_NET 0
 #define ETH_NET  1
 
+void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie);
+    
     // *****************************************************************************
 
     /* Application states
@@ -105,7 +107,7 @@ extern "C" {
         bool trigger_every_second;
         TCPIP_NET_HANDLE wlan_net_hdl;
         TCPIP_NET_HANDLE eth_net_hdl;
-
+        int32_t reset_countdown;
     } MONITOR_DATA;
 
     // *****************************************************************************
@@ -188,6 +190,8 @@ extern "C" {
 
     void MONITOR_Tasks(void);
 
+    void MONITOR_Reset(void);
+    
     //DOM-IGNORE-BEGIN
 #ifdef __cplusplus
 }

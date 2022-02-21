@@ -69,6 +69,10 @@ extern EXCEPT_MSG last_expt_msg;
 extern int RFMAC_count;
 extern int ETHERNET_counter;
 
+extern TaskHandle_t hdl_Task[];
+extern volatile uint32_t StackBotton[];
+extern volatile uint32_t StackEnd[12];
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -94,7 +98,6 @@ extern int ETHERNET_counter;
 // Section: Application Initialization and State Machine Functions
 // *****************************************************************************
 // *****************************************************************************
-
 /*******************************************************************************
   Function:
     void MONITOR_Initialize ( void )
@@ -105,6 +108,13 @@ extern int ETHERNET_counter;
 
 void MONITOR_TimerSecCallback(uintptr_t context) {
     monitorData.trigger_every_second = true;
+
+    if (monitorData.reset_countdown > 0) {
+        monitorData.reset_countdown--;
+        if (monitorData.reset_countdown == 0) {
+            MONITOR_Reset();
+        }
+    }
 }
 
 void MONITOR_Initialize(void) {
@@ -120,7 +130,8 @@ void MONITOR_Initialize(void) {
     monitorData.trigger_every_second = false;
     monitorData.wlan_net_hdl = NULL;
     monitorData.eth_net_hdl = NULL;
-
+    monitorData.reset_countdown = -1;
+    
     /* TODO: Initialize your application's state machine and other
      * parameters.
      */
@@ -211,7 +222,8 @@ void MONITOR_Display_Status(void) {
 
 void MONITOR_Tasks(void) {
     uint32_t DeviceID;
-
+    int ix;
+    
     if (monitorData.trigger_every_second) {
         monitorData.trigger_every_second = false;
         MONITOR_Display_Status();
@@ -243,6 +255,11 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT("Build Stamp 202201121109 tc1\n\r");
                 SYS_CONSOLE_PRINT("Device ID: %08x\n\r", DeviceID);
                 SYS_CONSOLE_PRINT("Monitor Task State Run\n\r");
+
+                for (ix = 0; ix < 12; ix++) {
+                    SYS_CONSOLE_PRINT("Task %02d Stack %08x Value %08x\n\r", ix, StackBotton[ix], StackEnd[ix]);
+                }
+                
                 if (last_expt_msg.magic == MAGIC_CODE) {
                     SYS_CONSOLE_PRINT(VT100_TEXT_DEFAULT "\n\r!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n");
                     SYS_CONSOLE_PRINT(VT100_TEXT_DEFAULT "Last Runtime has ended with the following Message:\n\r");
@@ -312,6 +329,35 @@ void DisableAllDHCPx(void){
         TCPIP_DHCP_Disable(monitorData.wlan_net_hdl);
         TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
 }
+
+void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie) {
+
+    switch (event) {
+        case SYS_WIFI_DISCONNECT:
+            SYS_CONSOLE_PRINT("WiFi Event DISCONNECT\n\r");     
+            monitorData.reset_countdown = 2;
+            break;
+        case SYS_WIFI_CONNECT:
+            SYS_CONSOLE_PRINT("WiFi Event CONNECT\n\r");;
+            break;
+    }
+
+}
+
+void MONITOR_Reset(void){
+        while (1) {
+        SYSKEY = 0x00000000;
+        SYSKEY = 0xAA996655;
+        SYSKEY = 0x556699AA;
+        RSWRSTSET = _RSWRST_SWRST_MASK;
+        RSWRST;
+        Nop();
+        Nop();
+        Nop();
+        Nop();
+    }
+}
+
 
 /*******************************************************************************
  End of File

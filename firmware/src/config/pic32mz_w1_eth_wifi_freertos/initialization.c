@@ -841,7 +841,7 @@ void SYS_Initialize ( void* data )
 
 
     /* WiFi Service Initialization */
-    sysObj.syswifi = SYS_WIFI_Initialize(NULL,NULL,NULL);
+    sysObj.syswifi = SYS_WIFI_Initialize(NULL,MONITOR_Wifi_Callback,NULL);
     SYS_ASSERT(sysObj.syswifi  != SYS_MODULE_OBJ_INVALID, "SYS_WIFI_Initialize Failed" );
 
 
