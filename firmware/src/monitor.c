@@ -69,10 +69,6 @@ extern EXCEPT_MSG last_expt_msg;
 extern int RFMAC_count;
 extern int ETHERNET_counter;
 
-extern TaskHandle_t hdl_Task[];
-extern volatile uint32_t StackBotton[];
-extern volatile uint32_t StackEnd[12];
-
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -222,8 +218,7 @@ void MONITOR_Display_Status(void) {
 
 void MONITOR_Tasks(void) {
     uint32_t DeviceID;
-    int ix;
-    
+
     if (monitorData.trigger_every_second) {
         monitorData.trigger_every_second = false;
         MONITOR_Display_Status();
@@ -252,14 +247,9 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT(
                         "======================================================\n\r");
                 SYS_CONSOLE_PRINT("L2 Bridge Build Time  " __DATE__ " " __TIME__ "\n\r");
-                SYS_CONSOLE_PRINT("Build Stamp 202201121109 tc1\n\r");
+                SYS_CONSOLE_PRINT("Build Stamp 202202212208 tc1\n\r");
                 SYS_CONSOLE_PRINT("Device ID: %08x\n\r", DeviceID);
                 SYS_CONSOLE_PRINT("Monitor Task State Run\n\r");
-
-                for (ix = 0; ix < 12; ix++) {
-                    SYS_CONSOLE_PRINT("Task %02d Stack %08x Value %08x\n\r", ix, StackBotton[ix], StackEnd[ix]);
-                }
-                
                 if (last_expt_msg.magic == MAGIC_CODE) {
                     SYS_CONSOLE_PRINT(VT100_TEXT_DEFAULT "\n\r!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n");
                     SYS_CONSOLE_PRINT(VT100_TEXT_DEFAULT "Last Runtime has ended with the following Message:\n\r");

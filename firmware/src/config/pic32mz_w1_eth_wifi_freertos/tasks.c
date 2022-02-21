@@ -213,11 +213,6 @@ void _SYS_WIFI_Task(  void *pvParameters  )
   Remarks:
     See prototype in system/common/sys_module.h.
 */
-
-TaskHandle_t hdl_Task[12];
-volatile uint32_t StackBotton[12] __attribute__((persistent));
-uint32_t GetStackBotton(TaskHandle_t tcb);
- 
 void SYS_Tasks ( void )
 {
     /* Maintain system services */
@@ -226,20 +221,19 @@ void SYS_Tasks ( void )
         1024, // SYS_CONSOLE_RTOS_STACK_SIZE_IDX0,
         (void*)NULL,
         SYS_CONSOLE_RTOS_TASK_PRIORITY_IDX0,
-        &hdl_Task[0]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[0]=GetStackBotton(hdl_Task[0]);
 
     xTaskCreate( _SYS_CMD_Tasks,
         "SYS_CMD_TASKS",
         SYS_CMD_RTOS_STACK_SIZE,
         (void*)NULL,
         SYS_CMD_RTOS_TASK_PRIORITY,
-        &hdl_Task[1]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[1]=GetStackBotton(hdl_Task[1]);
+
 
 
     /* Maintain Device Drivers */
@@ -248,21 +242,19 @@ void SYS_Tasks ( void )
         DRV_MIIM_RTOS_STACK_SIZE,
         (void*)NULL,
         DRV_MIIM_RTOS_TASK_PRIORITY,
-        &hdl_Task[2]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[2]=GetStackBotton(hdl_Task[2]);
-    
+
     xTaskCreate( _WDRV_PIC32MZW1_Tasks,
         "WDRV_PIC32MZW1_Tasks",
         1024,
         (void*)NULL,
         1,
-        &hdl_Task[3]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[3]=GetStackBotton(hdl_Task[3]);
-    
+
 
 
     /* Maintain Middleware & Other Libraries */
@@ -272,53 +264,51 @@ void SYS_Tasks ( void )
         DRV_BA414E_RTOS_STACK_SIZE,
         (void*)NULL,
         DRV_BA414E_RTOS_TASK_PRIORITY,
-        &hdl_Task[4]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[4]=GetStackBotton(hdl_Task[4]);
-    
+
     /* Create OS Thread for USB_DEVICE_Tasks. */
     xTaskCreate( _USB_DEVICE_Tasks,
         "USB_DEVICE_TASKS",
         1024,
         (void*)NULL,
         1,
-        &hdl_Task[5]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[5]=GetStackBotton(hdl_Task[5]);
+
 
     xTaskCreate( _TCPIP_STACK_Task,
         "TCPIP_STACK_Tasks",
         TCPIP_RTOS_STACK_SIZE,
         (void*)NULL,
         TCPIP_RTOS_PRIORITY,
-        &hdl_Task[6]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[6]=GetStackBotton(hdl_Task[6]);
+
 
     xTaskCreate( _NET_PRES_Tasks,
         "NET_PRES_Tasks",
         NET_PRES_RTOS_STACK_SIZE,
         (void*)NULL,
         NET_PRES_RTOS_TASK_PRIORITY,
-        &hdl_Task[7]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
-    StackBotton[7]=GetStackBotton(hdl_Task[7]);
-    
+
     xTaskCreate( _SYS_WIFI_Task,
         "SYS_WIFI_Tasks",
-        4096, //SYS_WIFI_RTOS_SIZE,
+        SYS_WIFI_RTOS_SIZE,
         (void*)NULL,
         SYS_WIFI_RTOS_PRIORITY,
-       &hdl_Task[8]//(TaskHandle_t*)NULL
+        (TaskHandle_t*)NULL
     );
 
 
-    StackBotton[8]=GetStackBotton(hdl_Task[8]);
-    
+
+
     /* Maintain the application's state machine. */
         /* Create OS Thread for MONITOR_Tasks. */
     xTaskCreate((TaskFunction_t) _MONITOR_Tasks,
@@ -326,29 +316,25 @@ void SYS_Tasks ( void )
                 1024,
                 NULL,
                 1,
-                &hdl_Task[9]);//&xMONITOR_Tasks);
+                &xMONITOR_Tasks);
 
-    StackBotton[9]=GetStackBotton(hdl_Task[9]);
-    
     /* Create OS Thread for APP_Tasks. */
     xTaskCreate((TaskFunction_t) _APP_Tasks,
                 "APP_Tasks",
                 1024,
                 NULL,
                 1,
-                &hdl_Task[10]);//&xAPP_Tasks);
+                &xAPP_Tasks);
 
-    StackBotton[10]=GetStackBotton(hdl_Task[10]);
-    
     /* Create OS Thread for UART_BRIDGE_Tasks. */
     xTaskCreate((TaskFunction_t) _UART_BRIDGE_Tasks,
                 "UART_BRIDGE_Tasks",
                 1024,
                 NULL,
                 1,
-                &hdl_Task[11]);//&xUART_BRIDGE_Tasks);
+                &xUART_BRIDGE_Tasks);
 
-    StackBotton[11]=GetStackBotton(hdl_Task[11]);
+
 
 
     /* Start RTOS Scheduler. */

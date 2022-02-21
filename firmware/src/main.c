@@ -34,22 +34,8 @@
 // *****************************************************************************
 // *****************************************************************************
 
-extern volatile uint32_t StackBotton[];
-volatile uint32_t StackEnd[12];
-
 int main ( void )
 {
-    int ix;
-    
-    for(ix=0;ix<12;ix++){
-        if(   (StackBotton[ix] & 0xF0000000) == 0xA0000000 ){
-            StackEnd[ix] = *(uint32_t *)StackBotton[ix];
-        }
-        else{
-            StackEnd[ix] = 0xFFFFFFFF;
-        }
-    }
-    
     /* Initialize all modules */
     SYS_Initialize ( NULL );
 

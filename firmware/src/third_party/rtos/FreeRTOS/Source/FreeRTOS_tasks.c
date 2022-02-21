@@ -5307,7 +5307,4 @@ when performing module tests). */
 
 #endif
 
-        uint32_t GetStackBotton(TaskHandle_t tcb){
-            
-            return (uint32_t)(tcb->pxStack);
-        }
+
