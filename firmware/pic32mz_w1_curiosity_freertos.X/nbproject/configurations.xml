@@ -718,6 +718,7 @@
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/dnss.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/tcpip_mac_bridge.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/telnet.c</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/iperf.c</itemPath>
               </logicalFolder>
             </logicalFolder>
           </logicalFolder>
@@ -940,8 +941,10 @@
           <logicalFolder name="f1" displayName="TCP_IP_STACK" projectFiles="true">
             <logicalFolder name="f1" displayName="APPLICATION_LAYER" projectFiles="true">
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/APPLICATION_LAYER.yml</itemPath>
+              <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/tcpipDhcp.yml</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/tcpipDhcps.yml</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/tcpipDnss.yml</itemPath>
+              <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/tcpipIperf.yml</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/tcpipTelnet.yml</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/pic32mz_w1_eth_wifi_freertos.mhc/System_Configuration/TCP_IP_STACK/APPLICATION_LAYER/tcpip_apps_config.yml</itemPath>
             </logicalFolder>

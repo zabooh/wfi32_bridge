@@ -111,6 +111,10 @@ void MONITOR_TimerSecCallback(uintptr_t context) {
             MONITOR_Reset();
         }
     }
+
+    if (monitorData.dhcp_countdown > 0) {
+        monitorData.dhcp_countdown--;
+    }
 }
 
 void MONITOR_Initialize(void) {
@@ -127,6 +131,9 @@ void MONITOR_Initialize(void) {
     monitorData.wlan_net_hdl = NULL;
     monitorData.eth_net_hdl = NULL;
     monitorData.reset_countdown = -1;
+    monitorData.dhcp_countdown = -1;
+    monitorData.eth_event_hdl = NULL;
+    monitorData.wlan_event_hdl = NULL;
     
     /* TODO: Initialize your application's state machine and other
      * parameters.
@@ -137,25 +144,45 @@ void MONITOR_Initialize(void) {
 }
 
 void MONITOR_CheckForDHCPLease(void) {
-    TCPIP_NET_HANDLE netHdl = TCPIP_STACK_NetHandleGet("PIC32MZWINT");
-    TCPIP_DHCPS_LEASE_HANDLE dhcpsLease = 0;
-    TCPIP_DHCPS_LEASE_ENTRY dhcpsLeaseEntry;
-    static TCPIP_DHCPS_LEASE_ENTRY dhcpsLeaseEntry_old;
+    TCPIP_NET_HANDLE eth_netHdl = TCPIP_STACK_NetHandleGet("PIC32MZWINT");
+    TCPIP_DHCPS_LEASE_HANDLE eth_dhcpsLease = 0;
+    TCPIP_DHCPS_LEASE_ENTRY eth_dhcpsLeaseEntry;
+    static TCPIP_DHCPS_LEASE_ENTRY eth_dhcpsLeaseEntry_old;
 
-    dhcpsLease = TCPIP_DHCPS_LeaseEntryGet(netHdl, &dhcpsLeaseEntry, dhcpsLease);
-    if (dhcpsLeaseEntry_old.ipAddress.Val == dhcpsLeaseEntry.ipAddress.Val) {
+    eth_dhcpsLease = TCPIP_DHCPS_LeaseEntryGet(eth_netHdl, &eth_dhcpsLeaseEntry, eth_dhcpsLease);
+    if (eth_dhcpsLeaseEntry_old.ipAddress.Val == eth_dhcpsLeaseEntry.ipAddress.Val) {
         return;
     }
-    if (0 != dhcpsLease) {
-        SYS_CONSOLE_PRINT("\r\nConnected ETH   IP:%d.%d.%d.%d   MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
-                dhcpsLeaseEntry.ipAddress.v[0], dhcpsLeaseEntry.ipAddress.v[1], dhcpsLeaseEntry.ipAddress.v[2], dhcpsLeaseEntry.ipAddress.v[3],
-                dhcpsLeaseEntry.hwAdd.v[0], dhcpsLeaseEntry.hwAdd.v[1], dhcpsLeaseEntry.hwAdd.v[2], dhcpsLeaseEntry.hwAdd.v[3], dhcpsLeaseEntry.hwAdd.v[4], dhcpsLeaseEntry.hwAdd.v[5]);
-        dhcpsLeaseEntry_old.ipAddress.Val = dhcpsLeaseEntry.ipAddress.Val;
+    if (0 != eth_dhcpsLease) {
+        SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+        SYS_CONSOLE_PRINT("DHCP Server Lease ETH  IP:%d.%d.%d.%d   MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
+                eth_dhcpsLeaseEntry.ipAddress.v[0], eth_dhcpsLeaseEntry.ipAddress.v[1], eth_dhcpsLeaseEntry.ipAddress.v[2], eth_dhcpsLeaseEntry.ipAddress.v[3],
+                eth_dhcpsLeaseEntry.hwAdd.v[0], eth_dhcpsLeaseEntry.hwAdd.v[1], eth_dhcpsLeaseEntry.hwAdd.v[2], eth_dhcpsLeaseEntry.hwAdd.v[3], eth_dhcpsLeaseEntry.hwAdd.v[4], eth_dhcpsLeaseEntry.hwAdd.v[5]);
+        eth_dhcpsLeaseEntry_old.ipAddress.Val = eth_dhcpsLeaseEntry.ipAddress.Val;
     }
+    
+    
+    TCPIP_NET_HANDLE wlan_netHdl = TCPIP_STACK_NetHandleGet("PIC32MZW1");
+    TCPIP_DHCPS_LEASE_HANDLE wlan_dhcpsLease = 0;
+    TCPIP_DHCPS_LEASE_ENTRY wlan_dhcpsLeaseEntry;
+    static TCPIP_DHCPS_LEASE_ENTRY wlan_dhcpsLeaseEntry_old;
+
+    wlan_dhcpsLease = TCPIP_DHCPS_LeaseEntryGet(wlan_netHdl, &wlan_dhcpsLeaseEntry, wlan_dhcpsLease);
+    if (wlan_dhcpsLeaseEntry_old.ipAddress.Val == wlan_dhcpsLeaseEntry.ipAddress.Val) {
+        return;
+    }
+    if (0 != wlan_dhcpsLease) {
+         SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+        SYS_CONSOLE_PRINT("DHCP Server Lease WLAN IP:%d.%d.%d.%d   MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
+                wlan_dhcpsLeaseEntry.ipAddress.v[0], wlan_dhcpsLeaseEntry.ipAddress.v[1], wlan_dhcpsLeaseEntry.ipAddress.v[2], wlan_dhcpsLeaseEntry.ipAddress.v[3],
+                wlan_dhcpsLeaseEntry.hwAdd.v[0], wlan_dhcpsLeaseEntry.hwAdd.v[1], wlan_dhcpsLeaseEntry.hwAdd.v[2], wlan_dhcpsLeaseEntry.hwAdd.v[3], wlan_dhcpsLeaseEntry.hwAdd.v[4], wlan_dhcpsLeaseEntry.hwAdd.v[5]);
+        wlan_dhcpsLeaseEntry_old.ipAddress.Val = wlan_dhcpsLeaseEntry.ipAddress.Val;
+    }    
+    
 }
 
 void MONITOR_SetDisplayStatus(bool flag) {
-    monitorData.status_display_flag = flag;
+    monitorData.status_display_flag = flag;    
 }
 
 void MONITOR_Display_Status(void) {
@@ -268,18 +295,41 @@ void MONITOR_Tasks(void) {
                 }
                 monitorData.wlan_net_hdl = TCPIP_STACK_IndexToNet(WLAN_NET);
                 monitorData.eth_net_hdl = TCPIP_STACK_IndexToNet(ETH_NET);
-//                TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);
-//                TCPIP_DHCPS_Disable(monitorData.eth_net_hdl);
-//                TCPIP_DHCP_Disable(monitorData.wlan_net_hdl);
-//                TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
-                monitorData.state = MONITOR_STATE_SERVICE_TASKS;
+                monitorData.eth_event_hdl = TCPIP_STACK_HandlerRegister(monitorData.eth_net_hdl, TCPIP_EV_CONN_ALL, MONITOR_TcpipStack_EventHandler, NULL);
+                monitorData.wlan_event_hdl = TCPIP_STACK_HandlerRegister(monitorData.wlan_net_hdl, TCPIP_EV_CONN_ALL, MONITOR_TcpipStack_EventHandler, NULL);
+                SYS_CONSOLE_PRINT("ETH:  DHCP Client enabled and Server Disabled\n\r");
+                SYS_CONSOLE_PRINT("WLAN: DHCP Sever enabled\n\r");
+                monitorData.dhcp_countdown = 10;
+                monitorData.state = MONITOR_STATE_WAIT_FOR_DHCP;
             }
             break;
         }
 
-        case MONITOR_STATE_SERVICE_TASKS:
+        case MONITOR_STATE_WAIT_FOR_DHCP:
         {
-
+            if (TCPIP_DHCP_IsBound(monitorData.eth_net_hdl) == true) {
+                if (MONITOR_Check_For_New_DHCP_Client_Lease(monitorData.eth_net_hdl, &monitorData.eth_ip_addr) == true) {
+                    SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+                    SYS_CONSOLE_PRINT("WLAN: DHCP Server Disabled\n\r");
+                    TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);                    
+                    SYS_CONSOLE_PRINT("Connected to Network with DHCP Server\n\r");
+                    monitorData.state = MONITOR_STATE_SERVICE_TASKS;
+                }
+            }
+            if(monitorData.dhcp_countdown==0){
+                SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+                TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
+                SYS_CONSOLE_PRINT("ETH: DHCP Client Disabled\n\r");
+                TCPIP_DHCPS_Enable(monitorData.eth_net_hdl);                
+                SYS_CONSOLE_PRINT("ETH: DHCP Server Enabled\n\r");
+                SYS_CONSOLE_PRINT("Connected to Host\n\r");
+                monitorData.state = MONITOR_STATE_SERVICE_TASKS;
+            }
+            break;
+        }            
+         
+        case MONITOR_STATE_SERVICE_TASKS:
+        {            
             break;
         }
 
@@ -304,15 +354,7 @@ time_t time(time_t * time_r) { /* seconds since 00:00:00 Jan 1 1970 */
     return monitorData.seconds_total;
 }
 
-volatile int peng1 = 1;
-volatile int peng2 = 1;
-
 void DisableAllDHCPx(void){
-    int abc[2048];
-    int ix;
-    
-    for(ix=0;ix<2048;ix++)abc[ix]=0xAFFEAFFE;    
-    peng1 = abc[peng1];
     
         TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);
         TCPIP_DHCPS_Disable(monitorData.eth_net_hdl);
@@ -324,10 +366,12 @@ void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie) {
 
     switch (event) {
         case SYS_WIFI_DISCONNECT:
+            SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
             SYS_CONSOLE_PRINT("WiFi Event DISCONNECT\n\r");     
             monitorData.reset_countdown = 2;
             break;
         case SYS_WIFI_CONNECT:
+            SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
             SYS_CONSOLE_PRINT("WiFi Event CONNECT\n\r");;
             break;
     }
@@ -347,6 +391,86 @@ void MONITOR_Reset(void){
         Nop();
     }
 }
+
+bool MONITOR_Check_For_New_DHCP_Client_Lease(TCPIP_NET_HANDLE net_hdl, IPV4_ADDR *prev_ip_addr) {
+    IPV4_ADDR ip_addr;
+    bool ret_val = false;
+
+    ip_addr.Val = TCPIP_STACK_NetAddress(net_hdl);
+    if (prev_ip_addr->Val != ip_addr.Val) {
+        prev_ip_addr->Val = ip_addr.Val;
+        IPV4_ADDR ip_default_addr;
+        TCPIP_Helper_StringToIPAddress(TCPIP_NETWORK_DEFAULT_IP_ADDRESS_IDX1, &ip_default_addr);
+
+        if (ip_addr.Val != ip_default_addr.Val) {
+            SYS_CONSOLE_PRINT("%s new IP Address: ", TCPIP_STACK_NetNameGet(net_hdl));
+            SYS_CONSOLE_PRINT("%d.%d.%d.%d \r\n", ip_addr.v[0], ip_addr.v[1], ip_addr.v[2], ip_addr.v[3]);
+            ret_val = true;
+        }
+    }
+
+    return ret_val;
+}
+
+void MONITOR_Arp_Scan(void) {
+    IPV4_ADDR ip_addr;
+    TCPIP_MAC_ADDR mac_addr;
+    uint32_t ix;
+    char MacAddrBuff[20];
+    char IPAddrBuff[20];
+
+    SYS_CONSOLE_PRINT("ARP scan started\n\r");
+
+    /* get the current IP address of the interface */
+    ip_addr.Val = TCPIP_STACK_NetAddress(monitorData.eth_net_hdl);
+
+    /* scan through all addresses from x.x.x.1 to x.x.x.255 */
+    for (ix = 1; ix < 255; ix++) {
+        ip_addr.v[3] = ix;
+        /* send ARP request */
+        TCPIP_ARP_Resolve(monitorData.eth_net_hdl, &ip_addr);
+        /* wait 20 miili seconds for a response */
+        vTaskDelay(20 / portTICK_PERIOD_MS);
+        if (TCPIP_ARP_IsResolved(monitorData.eth_net_hdl, &ip_addr, &mac_addr) == true) {
+            /* when host responses, display MAC and IP */
+            TCPIP_Helper_MACAddressToString(&mac_addr, MacAddrBuff, sizeof (MacAddrBuff));
+            TCPIP_Helper_IPAddressToString(&ip_addr, IPAddrBuff, sizeof (IPAddrBuff));
+            SYS_CONSOLE_PRINT("%s  %s\n\r", MacAddrBuff, IPAddrBuff);
+        }
+        /* in all cases delete the ARP request from the cache 
+         * so that no retry or cache overrun could occur 
+         */
+        TCPIP_ARP_EntryRemove(monitorData.eth_net_hdl, &ip_addr);
+    }
+
+}
+
+void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, const void *fParam) {
+    const char *netName = TCPIP_STACK_NetNameGet(hNet);
+    
+    SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+    SYS_CONSOLE_PRINT("TCP Stack Event Handler %s - %x - ", netName, event);
+    if (event & TCPIP_EV_CONN_ESTABLISHED) {
+        SYS_CONSOLE_PRINT("connection established\r\n");
+        if (hNet == monitorData.eth_net_hdl) {
+            //TODO: 
+        } else if (hNet == monitorData.wlan_net_hdl) {
+            SYS_CONSOLE_PRINT("action unknown\r\n");
+        }
+    } else if (event & TCPIP_EV_CONN_LOST) {
+        SYS_CONSOLE_PRINT("connection lost\r\n");
+        if (hNet == monitorData.eth_net_hdl) {
+            monitorData.reset_countdown = 2;
+        } else if (hNet == monitorData.wlan_net_hdl) {
+            SYS_CONSOLE_PRINT("action unknown\r\n");
+        }
+    } else {
+        SYS_CONSOLE_PRINT("TCP Stack Event Handler %s Unknown event = %d\r\n", netName, event);
+    }
+
+}
+
+
 
 
 /*******************************************************************************

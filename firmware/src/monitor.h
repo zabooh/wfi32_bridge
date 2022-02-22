@@ -57,7 +57,8 @@ extern "C" {
 #define ETH_NET  1
 
 void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie);
-    
+bool MONITOR_Check_For_New_DHCP_Client_Lease(TCPIP_NET_HANDLE net_hdl, IPV4_ADDR *prev_ip_addr);
+
     // *****************************************************************************
 
     /* Application states
@@ -74,6 +75,7 @@ void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie);
         /* Application's state machine's initial state. */
         MONITOR_STATE_INIT = 0,
         MONITOR_STATE_WAIT_FOR_TCP_STACK_READY,
+        MONITOR_STATE_WAIT_FOR_DHCP,
         MONITOR_STATE_SERVICE_TASKS,
         /* TODO: Define states used by the application state machine. */
 
@@ -107,7 +109,11 @@ void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie);
         bool trigger_every_second;
         TCPIP_NET_HANDLE wlan_net_hdl;
         TCPIP_NET_HANDLE eth_net_hdl;
+        IPV4_ADDR eth_ip_addr;
         int32_t reset_countdown;
+        int32_t dhcp_countdown;        
+        TCPIP_EVENT_HANDLE eth_event_hdl;
+        TCPIP_EVENT_HANDLE wlan_event_hdl;
     } MONITOR_DATA;
 
     // *****************************************************************************
@@ -192,6 +198,9 @@ void MONITOR_Wifi_Callback(uint32_t event, void * data, void *cookie);
 
     void MONITOR_Reset(void);
     
+    void MONITOR_Print_Time(void);
+    
+    void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, const void *fParam);
     //DOM-IGNORE-BEGIN
 #ifdef __cplusplus
 }

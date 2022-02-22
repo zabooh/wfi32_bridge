@@ -366,7 +366,7 @@ children:
         - type: Values
           children:
           - type: User
-            attributes: {value: '1'}
+            attributes: {value: '0'}
       - type: KeyValueSet
         attributes: {id: TCPIP_NETWORK_INTERFACE_FLAG_DNS_IDX1}
         children:

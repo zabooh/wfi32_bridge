@@ -345,8 +345,8 @@ static void SYS_WIFI_WaitForConnSTAIP(uintptr_t context)
             SYS_WIFI_STA_CONNECTION_INFO *staConnInfo = (SYS_WIFI_STA_CONNECTION_INFO *)context;
             if(0 == memcmp(&dhcpsLeaseEntry.hwAdd, staConnInfo->wifiSrvcStaAppInfo.macAddr, WDRV_PIC32MZW_MAC_ADDR_LEN))
             {               
-                SYS_CONSOLE_PRINT("Connected STA   IP:%d.%d.%d.%d   MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n", dhcpsLeaseEntry.ipAddress.v[0], dhcpsLeaseEntry.ipAddress.v[1], dhcpsLeaseEntry.ipAddress.v[2], dhcpsLeaseEntry.ipAddress.v[3],
-                            dhcpsLeaseEntry.hwAdd.v[0], dhcpsLeaseEntry.hwAdd.v[1], dhcpsLeaseEntry.hwAdd.v[2], dhcpsLeaseEntry.hwAdd.v[3], dhcpsLeaseEntry.hwAdd.v[4], dhcpsLeaseEntry.hwAdd.v[5]);
+                //SYS_CONSOLE_PRINT("Connected STA   IP:%d.%d.%d.%d   MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n", dhcpsLeaseEntry.ipAddress.v[0], dhcpsLeaseEntry.ipAddress.v[1], dhcpsLeaseEntry.ipAddress.v[2], dhcpsLeaseEntry.ipAddress.v[3],
+                //            dhcpsLeaseEntry.hwAdd.v[0], dhcpsLeaseEntry.hwAdd.v[1], dhcpsLeaseEntry.hwAdd.v[2], dhcpsLeaseEntry.hwAdd.v[3], dhcpsLeaseEntry.hwAdd.v[4], dhcpsLeaseEntry.hwAdd.v[5]);
                 staConnInfo->wifiSrvcStaAppInfo.ipAddr.Val = dhcpsLeaseEntry.ipAddress.Val;
                 staConnInfo->wifiSrvcSTAConnUpdate = true; 
                 SYS_WIFI_SetTaskstatus(SYS_WIFI_STATUS_WAIT_FOR_STA_IP);
@@ -375,7 +375,7 @@ static void SYS_WIFI_APConnCallBack
             if (WDRV_PIC32MZW_STATUS_OK == WDRV_PIC32MZW_AssocPeerAddressGet(assocHandle, &wifiSrvcStaConnMac)) 
             {
                 uint8_t idx = 0;
-                SYS_CONSOLE_PRINT("\r\nConnected STA MAC Address=%x:%x:%x:%x:%x:%x", wifiSrvcStaConnMac.addr[0], wifiSrvcStaConnMac.addr[1], wifiSrvcStaConnMac.addr[2], wifiSrvcStaConnMac.addr[3], wifiSrvcStaConnMac.addr[4], wifiSrvcStaConnMac.addr[5]);
+                SYS_CONSOLE_PRINT("Connected STA MAC Address=%x:%x:%x:%x:%x:%x\n\r", wifiSrvcStaConnMac.addr[0], wifiSrvcStaConnMac.addr[1], wifiSrvcStaConnMac.addr[2], wifiSrvcStaConnMac.addr[3], wifiSrvcStaConnMac.addr[4], wifiSrvcStaConnMac.addr[5]);
 
                 /* Store the connected STA Info in the STA Conn Array */
                 for(idx = 0; idx < SYS_WIFI_MAX_STA_SUPPORTED; idx++)
@@ -698,6 +698,11 @@ static uint32_t SYS_WIFI_ExecuteBlock
                     {
                         /* PIC32MZW1 network handle*/
                         netHdl = TCPIP_STACK_NetHandleGet("PIC32MZW1");
+                        /* AP Mode*/
+                        if (true == TCPIP_DHCP_IsEnabled(netHdl)) 
+                        {
+                            TCPIP_DHCP_Disable(netHdl);
+                        }
                         /* Enable DHCP Server in AP mode */
                         TCPIP_DHCPS_Enable(netHdl);
                     }                
