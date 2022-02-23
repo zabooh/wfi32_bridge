@@ -62,6 +62,15 @@
 // *****************************************************************************
 
 
+/*** Macros for KILL_WFI pin ***/
+#define KILL_WFI_Set()               (LATBSET = (1<<7))
+#define KILL_WFI_Clear()             (LATBCLR = (1<<7))
+#define KILL_WFI_Toggle()            (LATBINV= (1<<7))
+#define KILL_WFI_OutputEnable()      (TRISBCLR = (1<<7))
+#define KILL_WFI_InputEnable()       (TRISBSET = (1<<7))
+#define KILL_WFI_Get()               ((PORTB >> 7) & 0x1)
+#define KILL_WFI_PIN                  GPIO_PIN_RB7
+
 
 // *****************************************************************************
 /* GPIO Port
