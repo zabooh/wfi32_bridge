@@ -69,6 +69,8 @@ extern EXCEPT_MSG last_expt_msg;
 extern int RFMAC_count;
 extern int ETHERNET_counter;
 
+void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evType, const void* param);
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Application Callback Functions
@@ -162,7 +164,7 @@ void MONITOR_CheckForDHCPLease(void) {
     }
     
     
-    TCPIP_NET_HANDLE wlan_netHdl = TCPIP_STACK_NetHandleGet("PIC32MZW1");
+    TCPIP_NET_HANDLE wlan_netHdl = TCPIP_STACK_IndexToNet(WLAN_NET);//TCPIP_STACK_NetHandleGet("PIC32MZW1");
     TCPIP_DHCPS_LEASE_HANDLE wlan_dhcpsLease = 0;
     TCPIP_DHCPS_LEASE_ENTRY wlan_dhcpsLeaseEntry;
     static TCPIP_DHCPS_LEASE_ENTRY wlan_dhcpsLeaseEntry_old;
@@ -299,7 +301,8 @@ void MONITOR_Tasks(void) {
                 monitorData.wlan_event_hdl = TCPIP_STACK_HandlerRegister(monitorData.wlan_net_hdl, TCPIP_EV_CONN_ALL, MONITOR_TcpipStack_EventHandler, NULL);
                 SYS_CONSOLE_PRINT("ETH:  DHCP Client enabled and Server Disabled\n\r");
                 SYS_CONSOLE_PRINT("WLAN: DHCP Sever enabled\n\r");
-                monitorData.dhcp_countdown = 10;
+                monitorData.dhcp_countdown = 11;
+                TCPIP_DHCP_HandlerRegister(monitorData.eth_net_hdl, MONITOR_DHCP_eth_Handler, &monitorData.dhcp_eth_hParam);
                 monitorData.state = MONITOR_STATE_WAIT_FOR_DHCP;
             }
             break;
@@ -451,18 +454,19 @@ void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, c
     SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
     SYS_CONSOLE_PRINT("TCP Stack Event Handler %s - %x - ", netName, event);
     if (event & TCPIP_EV_CONN_ESTABLISHED) {
-        SYS_CONSOLE_PRINT("connection established\r\n");
+        SYS_CONSOLE_PRINT("connection established ");
         if (hNet == monitorData.eth_net_hdl) {
-            //TODO: 
+             SYS_CONSOLE_PRINT(" Ethernet\r\n");
         } else if (hNet == monitorData.wlan_net_hdl) {
-            SYS_CONSOLE_PRINT("action unknown\r\n");
+            SYS_CONSOLE_PRINT("Wlan \r\n");
         }
     } else if (event & TCPIP_EV_CONN_LOST) {
-        SYS_CONSOLE_PRINT("connection lost\r\n");
+        SYS_CONSOLE_PRINT("connection lost ");
         if (hNet == monitorData.eth_net_hdl) {
             monitorData.reset_countdown = 2;
+            SYS_CONSOLE_PRINT(" Ethernet\r\n");
         } else if (hNet == monitorData.wlan_net_hdl) {
-            SYS_CONSOLE_PRINT("action unknown\r\n");
+            SYS_CONSOLE_PRINT("Wlan \r\n");
         }
     } else {
         SYS_CONSOLE_PRINT("TCP Stack Event Handler %s Unknown event = %d\r\n", netName, event);
@@ -470,8 +474,43 @@ void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, c
 
 }
 
+void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evType, const void* param) {
 
+    SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+    SYS_CONSOLE_PRINT("%s - ", TCPIP_STACK_NetNameGet(hNet));
 
+    switch (evType) {
+        case DHCP_EVENT_NONE: SYS_CONSOLE_PRINT("DHCP_EVENT_NONE\n\r");
+            break;
+        case DHCP_EVENT_DISCOVER: SYS_CONSOLE_PRINT("DHCP_EVENT_DISCOVER\n\r");
+            break;
+        case DHCP_EVENT_REQUEST: SYS_CONSOLE_PRINT("DHCP_EVENT_REQUEST\n\r");
+            break;
+        case DHCP_EVENT_ACK: SYS_CONSOLE_PRINT("DHCP_EVENT_ACK\n\r");
+            break;
+        case DHCP_EVENT_ACK_INVALID: SYS_CONSOLE_PRINT("DHCP_EVENT_ACK_INVALID\n\r");
+            break;
+        case DHCP_EVENT_DECLINE: SYS_CONSOLE_PRINT("DHCP_EVENT_DECLINE\n\r");
+            break;
+        case DHCP_EVENT_NACK: SYS_CONSOLE_PRINT("DHCP_EVENT_NACK\n\r");
+            break;
+        case DHCP_EVENT_TIMEOUT: SYS_CONSOLE_PRINT("DHCP_EVENT_TIMEOUT\n\r");
+            break;
+        case DHCP_EVENT_BOUND: SYS_CONSOLE_PRINT("DHCP_EVENT_BOUND\n\r");
+            break;
+        case DHCP_EVENT_REQUEST_RENEW: SYS_CONSOLE_PRINT("DHCP_EVENT_REQUEST_RENEW\n\r");
+            break;
+        case DHCP_EVENT_REQUEST_REBIND: SYS_CONSOLE_PRINT("DHCP_EVENT_REQUEST_REBIND\n\r");
+            break;
+        case DHCP_EVENT_CONN_LOST: SYS_CONSOLE_PRINT("DHCP_EVENT_CONN_LOST\n\r");
+            break;
+        case DHCP_EVENT_CONN_ESTABLISHED: SYS_CONSOLE_PRINT("DHCP_EVENT_CONN_ESTABLISHED\n\r");
+            break;
+        case DHCP_EVENT_SERVICE_DISABLED: SYS_CONSOLE_PRINT("DHCP_EVENT_SERVICE_DISABLED\n\r");
+            break;
+
+    }
+}
 
 /*******************************************************************************
  End of File
