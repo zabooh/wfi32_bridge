@@ -796,7 +796,15 @@ const SYS_DEBUG_INIT debugInit =
 // *****************************************************************************
 // *****************************************************************************
 
-
+/* Program Memory Erase Block 
+ * size is 4k ->      0x0000_1000
+ * Last Address is    0x900F_FFFF (1 MB)
+ * Last Block Address 0x900F_F000  (Block reserved for WLAN configuration)           
+ * By Application:                  -mreserve=prog@0x100ff000:0x100ffffB 
+ * Next to Last       0x900F_E000 
+ * Magic Code         0x12345678
+ */
+const int __attribute__((address(0x900FE000), space(prog), keep)) MagicCode = 0x12345678;
 
 /*******************************************************************************
   Function:
