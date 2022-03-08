@@ -115,7 +115,9 @@ void MONITOR_TimerSecCallback(uintptr_t context) {
     }
 
     if (monitorData.dhcp_countdown > 0) {
-        monitorData.dhcp_countdown--;
+        if(monitorData.eth_is_connected == true){
+            monitorData.dhcp_countdown--;
+        }
     }
 }
 
@@ -136,7 +138,8 @@ void MONITOR_Initialize(void) {
     monitorData.dhcp_countdown = -1;
     monitorData.eth_event_hdl = NULL;
     monitorData.wlan_event_hdl = NULL;
-    
+    monitorData.eth_is_connected = false;
+            
     /* TODO: Initialize your application's state machine and other
      * parameters.
      */
@@ -456,6 +459,7 @@ void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, c
     if (event & TCPIP_EV_CONN_ESTABLISHED) {
         SYS_CONSOLE_PRINT("connection established ");
         if (hNet == monitorData.eth_net_hdl) {
+             monitorData.eth_is_connected = true;
              SYS_CONSOLE_PRINT(" Ethernet\r\n");
         } else if (hNet == monitorData.wlan_net_hdl) {
             SYS_CONSOLE_PRINT("Wlan \r\n");
@@ -463,6 +467,7 @@ void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, c
     } else if (event & TCPIP_EV_CONN_LOST) {
         SYS_CONSOLE_PRINT("connection lost ");
         if (hNet == monitorData.eth_net_hdl) {
+            monitorData.eth_is_connected = false;
             monitorData.reset_countdown = 2;
             SYS_CONSOLE_PRINT(" Ethernet\r\n");
         } else if (hNet == monitorData.wlan_net_hdl) {

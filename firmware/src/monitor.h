@@ -115,6 +115,7 @@ bool MONITOR_Check_For_New_DHCP_Client_Lease(TCPIP_NET_HANDLE net_hdl, IPV4_ADDR
         TCPIP_EVENT_HANDLE eth_event_hdl;
         TCPIP_EVENT_HANDLE wlan_event_hdl;
         const void* dhcp_eth_hParam;
+        bool eth_is_connected;
     } MONITOR_DATA;
 
     // *****************************************************************************

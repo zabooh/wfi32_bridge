@@ -1064,7 +1064,7 @@
         <makeCustomizationNormalizeHexFile>true</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <item path="../src/config/pic32mz_w1_eth_wifi_freertos/app_mz.ld"
-            ex="false"
+            ex="true"
             overriding="false">
         <C32>
         </C32>
@@ -1189,7 +1189,7 @@
         </C32Global>
       </item>
       <item path="../src/config/pic32mz_w1_eth_wifi_freertos/p32MZ1025W104132.ld"
-            ex="true"
+            ex="false"
             overriding="false">
         <C32>
         </C32>
