@@ -76,6 +76,8 @@ bool MONITOR_Check_For_New_DHCP_Client_Lease(TCPIP_NET_HANDLE net_hdl, IPV4_ADDR
         MONITOR_STATE_INIT = 0,
         MONITOR_STATE_WAIT_FOR_TCP_STACK_READY,
         MONITOR_STATE_WAIT_FOR_DHCP,
+        MONITOR_STATE_WAIT_FOR_ALL_NETS_UP,
+        MONITOR_STATE_WAIT_COPY_MAC,
         MONITOR_STATE_SERVICE_TASKS,
         /* TODO: Define states used by the application state machine. */
 
@@ -116,6 +118,11 @@ bool MONITOR_Check_For_New_DHCP_Client_Lease(TCPIP_NET_HANDLE net_hdl, IPV4_ADDR
         TCPIP_EVENT_HANDLE wlan_event_hdl;
         const void* dhcp_eth_hParam;
         bool eth_is_connected;
+        bool wlan_is_connected;
+        char EthMACAddrBuff[20];
+        char WlanMACAddrBuff[20];
+        char EthIPAddrBuff[20];
+        char WlanIPAddrBuff[20];        
     } MONITOR_DATA;
 
     // *****************************************************************************

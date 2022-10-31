@@ -2300,6 +2300,7 @@ bool TCPIP_DHCPS_Disable(TCPIP_NET_HANDLE hNet)
     {
         return false;
     }
+    SYS_CONSOLE_PRINT("DHCP Server disabled:%08x\n\r",hNet);
 //  Now stop DHCP server
     _DHCPSrvClose(pNetIf,true);
     TCPIP_STACK_AddressServiceEvent(pNetIf, TCPIP_STACK_ADDRESS_SERVICE_DHCPS, TCPIP_STACK_ADDRESS_SERVICE_EVENT_USER_STOP);
@@ -2382,6 +2383,7 @@ static bool _DHCPS_StartOperation(TCPIP_NET_IF* pNetIf,DHCP_SRVR_DCPT* pDhcpsDcp
 
 bool TCPIP_DHCPS_Enable(TCPIP_NET_HANDLE hNet)
 {
+    SYS_CONSOLE_PRINT("DHCP Server enabled:%08x\n\r",hNet);
     return _DHCPS_Enable(hNet, true);
 }
 
