@@ -255,7 +255,7 @@ void MONITOR_Tasks(void) {
     if (monitorData.trigger_every_second) {
         monitorData.trigger_every_second = false;
         MONITOR_Display_Status();
-        MONITOR_CheckForDHCPLease();
+        //MONITOR_CheckForDHCPLease();
     }
 
     /* Check the application's current state. */
@@ -280,7 +280,7 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT(
                         "======================================================\n\r");
                 SYS_CONSOLE_PRINT("L2 Bridge Build Time  " __DATE__ " " __TIME__ "\n\r");
-                SYS_CONSOLE_PRINT("Build Stamp 202202212208 tc1\n\r");
+                SYS_CONSOLE_PRINT("Branch: MAC_Copy tc1\n\r");
                 SYS_CONSOLE_PRINT("Device ID: %08x\n\r", DeviceID);
                 SYS_CONSOLE_PRINT("Monitor Task State Run\n\r");
                 if (last_expt_msg.magic == MAGIC_CODE) {
@@ -370,6 +370,8 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT("ETH: DHCP Client Disabled\n\r");
                 TCPIP_DHCPS_Enable(monitorData.eth_net_hdl);                
                 SYS_CONSOLE_PRINT("ETH: DHCP Server Enabled\n\r");
+                TCPIP_DHCPS_Enable(monitorData.wlan_net_hdl);                
+                SYS_CONSOLE_PRINT("WLAN: DHCP Server Enabled\n\r");                
                 SYS_CONSOLE_PRINT("Connected to Host\n\r");
                 monitorData.state = MONITOR_STATE_SERVICE_TASKS;
             }            

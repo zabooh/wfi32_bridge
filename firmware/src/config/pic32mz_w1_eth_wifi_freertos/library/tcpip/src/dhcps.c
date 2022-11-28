@@ -1136,6 +1136,14 @@ static void DHCPReplyToDiscovery(TCPIP_NET_IF *pNetIf,BOOTP_HEADER *Header,DHCP_
     // Client MAC address
     memcpy(&rxHeader.ClientMAC,&Header->ClientMAC,sizeof(TCPIP_MAC_ADDR));
 
+    {
+        char MACaddrBuff[20];
+        TCPIP_Helper_MACAddressToString(&rxHeader.ClientMAC, MACaddrBuff, sizeof (MACaddrBuff));
+        char IPaddrBuff[20];
+        TCPIP_Helper_IPAddressToString(&rxHeader.YourIP, IPaddrBuff, sizeof (IPaddrBuff));        
+        SYS_CONSOLE_PRINT("DHCPS New Lease: %08x %s %s\n\r", pNetIf, MACaddrBuff , IPaddrBuff);
+    }
+    
     // copy the BOOT RX header contents to the processing Buffer
     TCPIP_DHCPS_CopyDataArrayToProcessBuff((uint8_t*)&rxHeader,&putBuffer,sizeof(BOOTP_HEADER));
 
