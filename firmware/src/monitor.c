@@ -55,21 +55,12 @@
 
 MONITOR_DATA monitorData;
 
-//uint32_t seconds = 0;
-//uint32_t minutes = 0;
-//uint32_t hours = 0;
-//uint32_t seconds_total = 0;
-//bool status_display_flag = false;
-//SYS_TIME_HANDLE timer_sec_hdl;
-//bool trigger_every_second = false;
-//TCPIP_NET_HANDLE wlan_net_hdl;
-//TCPIP_NET_HANDLE eth_net_hdl;
-
 extern EXCEPT_MSG last_expt_msg;
 extern int RFMAC_count;
 extern int ETHERNET_counter;
 
 void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evType, const void* param);
+void MONITOR_Print_State_Change(void);
 
 // *****************************************************************************
 // *****************************************************************************
@@ -119,6 +110,15 @@ void MONITOR_TimerSecCallback(uintptr_t context) {
             monitorData.dhcp_countdown--;
         }
     }
+
+    if (monitorData.wlan_alone_countdown > 0) {
+        monitorData.wlan_alone_countdown--;
+        if (monitorData.wlan_alone_countdown == 0) {
+            TCPIP_DHCPS_Enable(monitorData.wlan_net_hdl);
+            SYS_CONSOLE_PRINT("WLAN: DHCP Server Enabled\n\r");
+        }
+    }
+
 }
 
 void MONITOR_Initialize(void) {
@@ -140,6 +140,7 @@ void MONITOR_Initialize(void) {
     monitorData.wlan_event_hdl = NULL;
     monitorData.eth_is_connected = false;
     monitorData.wlan_is_connected = false;
+    monitorData.wlan_alone_countdown = 0;
             
     /* TODO: Initialize your application's state machine and other
      * parameters.
@@ -252,6 +253,8 @@ void MONITOR_Display_Status(void) {
 void MONITOR_Tasks(void) {
     uint32_t DeviceID;
 
+    MONITOR_Print_State_Change();
+    
     if (monitorData.trigger_every_second) {
         monitorData.trigger_every_second = false;
         MONITOR_Display_Status();
@@ -280,7 +283,7 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT(
                         "======================================================\n\r");
                 SYS_CONSOLE_PRINT("L2 Bridge Build Time  " __DATE__ " " __TIME__ "\n\r");
-                SYS_CONSOLE_PRINT("Branch: MAC_Copy tc1\n\r");
+                SYS_CONSOLE_PRINT("Branch: MAC_Copy tc2\n\r");
                 SYS_CONSOLE_PRINT("Device ID: %08x\n\r", DeviceID);
                 SYS_CONSOLE_PRINT("Monitor Task State Run\n\r");
                 if (last_expt_msg.magic == MAGIC_CODE) {
@@ -315,6 +318,7 @@ void MONITOR_Tasks(void) {
         case MONITOR_STATE_WAIT_FOR_ALL_NETS_UP:
             if(monitorData.eth_is_connected && monitorData.wlan_is_connected){
                 monitorData.state = MONITOR_STATE_WAIT_COPY_MAC;
+                monitorData.wlan_alone_countdown = 0;
             }
             break;
                  
@@ -506,6 +510,7 @@ void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, c
              SYS_CONSOLE_PRINT(" Ethernet\r\n");
         } else if (hNet == monitorData.wlan_net_hdl) {
             monitorData.wlan_is_connected = true;
+            monitorData.wlan_alone_countdown = 10;
             SYS_CONSOLE_PRINT("Wlan \r\n");
         }
     } else if (event & TCPIP_EV_CONN_LOST) {
@@ -561,6 +566,27 @@ void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evTyp
     }
 }
 
+
+char *states_str[] = {
+    "MONITOR_STATE_INIT",
+    "MONITOR_STATE_WAIT_FOR_TCP_STACK_READY",
+    "MONITOR_STATE_WAIT_FOR_DHCP",
+    "MONITOR_STATE_WAIT_FOR_ALL_NETS_UP",
+    "MONITOR_STATE_WAIT_COPY_MAC",
+    "MONITOR_STATE_SERVICE_TASKS"
+};
+
+void MONITOR_Print_State_Change(void) {
+    static MONITOR_STATES states = MONITOR_STATE_EMPTY;
+    if (states != monitorData.state) {
+        states = monitorData.state;
+        SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+        SYS_CONSOLE_PRINT("New Monitor State: %s\n\r", states_str[states]);
+    }
+}
+
+
+                
 /*******************************************************************************
  End of File
  */
