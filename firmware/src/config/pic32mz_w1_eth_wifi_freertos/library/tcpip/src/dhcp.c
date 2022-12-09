@@ -883,6 +883,7 @@ bool TCPIP_DHCP_Disable(TCPIP_NET_HANDLE hNet)
         DHCP_CLIENT_VARS* pClient = DHCPClients + TCPIP_STACK_NetIxGet(pNetIf);
         if(pClient->flags.bDHCPEnabled != 0)
         {
+            SYS_CONSOLE_PRINT("DHCP Client disabled:%08x\n\r",hNet);
             _DHCPClientClose(pNetIf, true, true);
             TCPIP_STACK_AddressServiceEvent(pNetIf, TCPIP_STACK_ADDRESS_SERVICE_DHCPC, TCPIP_STACK_ADDRESS_SERVICE_EVENT_USER_STOP);
             _DHCPDbgAddServiceEvent(pClient, TCPIP_STACK_ADDRESS_SERVICE_EVENT_USER_STOP, 0);
@@ -897,6 +898,7 @@ bool TCPIP_DHCP_Disable(TCPIP_NET_HANDLE hNet)
 
 bool TCPIP_DHCP_Enable(TCPIP_NET_HANDLE hNet)
 {
+    SYS_CONSOLE_PRINT("DHCP Client enabled:%08x\n\r",hNet);
     return _DHCPStartOperation(_TCPIPStackHandleToNetUp(hNet), TCPIP_DHCP_OP_REQ_ENABLE, 0);
 }
 

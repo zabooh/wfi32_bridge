@@ -55,21 +55,12 @@
 
 MONITOR_DATA monitorData;
 
-//uint32_t seconds = 0;
-//uint32_t minutes = 0;
-//uint32_t hours = 0;
-//uint32_t seconds_total = 0;
-//bool status_display_flag = false;
-//SYS_TIME_HANDLE timer_sec_hdl;
-//bool trigger_every_second = false;
-//TCPIP_NET_HANDLE wlan_net_hdl;
-//TCPIP_NET_HANDLE eth_net_hdl;
-
 extern EXCEPT_MSG last_expt_msg;
 extern int RFMAC_count;
 extern int ETHERNET_counter;
 
 void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evType, const void* param);
+void MONITOR_Print_State_Change(void);
 
 // *****************************************************************************
 // *****************************************************************************
@@ -119,6 +110,15 @@ void MONITOR_TimerSecCallback(uintptr_t context) {
             monitorData.dhcp_countdown--;
         }
     }
+
+    if (monitorData.wlan_alone_countdown > 0) {
+        monitorData.wlan_alone_countdown--;
+        if (monitorData.wlan_alone_countdown == 0) {
+            TCPIP_DHCPS_Enable(monitorData.wlan_net_hdl);
+            SYS_CONSOLE_PRINT("WLAN: DHCP Server Enabled\n\r");
+        }
+    }
+
 }
 
 void MONITOR_Initialize(void) {
@@ -139,6 +139,8 @@ void MONITOR_Initialize(void) {
     monitorData.eth_event_hdl = NULL;
     monitorData.wlan_event_hdl = NULL;
     monitorData.eth_is_connected = false;
+    monitorData.wlan_is_connected = false;
+    monitorData.wlan_alone_countdown = 0;
             
     /* TODO: Initialize your application's state machine and other
      * parameters.
@@ -251,10 +253,12 @@ void MONITOR_Display_Status(void) {
 void MONITOR_Tasks(void) {
     uint32_t DeviceID;
 
+    MONITOR_Print_State_Change();
+    
     if (monitorData.trigger_every_second) {
         monitorData.trigger_every_second = false;
         MONITOR_Display_Status();
-        MONITOR_CheckForDHCPLease();
+        //MONITOR_CheckForDHCPLease();
     }
 
     /* Check the application's current state. */
@@ -279,7 +283,7 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT(
                         "======================================================\n\r");
                 SYS_CONSOLE_PRINT("L2 Bridge Build Time  " __DATE__ " " __TIME__ "\n\r");
-                SYS_CONSOLE_PRINT("Build Stamp 202202212208 tc1\n\r");
+                SYS_CONSOLE_PRINT("Branch: 202212090919\n\r");
                 SYS_CONSOLE_PRINT("Device ID: %08x\n\r", DeviceID);
                 SYS_CONSOLE_PRINT("Monitor Task State Run\n\r");
                 if (last_expt_msg.magic == MAGIC_CODE) {
@@ -300,40 +304,83 @@ void MONITOR_Tasks(void) {
                 }
                 monitorData.wlan_net_hdl = TCPIP_STACK_IndexToNet(WLAN_NET);
                 monitorData.eth_net_hdl = TCPIP_STACK_IndexToNet(ETH_NET);
+                SYS_CONSOLE_PRINT("wlan0 net handle:%08x\n\r",monitorData.wlan_net_hdl);
+                SYS_CONSOLE_PRINT("eth0 net handle:%08x\n\r",monitorData.eth_net_hdl);
                 monitorData.eth_event_hdl = TCPIP_STACK_HandlerRegister(monitorData.eth_net_hdl, TCPIP_EV_CONN_ALL, MONITOR_TcpipStack_EventHandler, NULL);
-                monitorData.wlan_event_hdl = TCPIP_STACK_HandlerRegister(monitorData.wlan_net_hdl, TCPIP_EV_CONN_ALL, MONITOR_TcpipStack_EventHandler, NULL);
-                SYS_CONSOLE_PRINT("ETH:  DHCP Client enabled and Server Disabled\n\r");
-                SYS_CONSOLE_PRINT("WLAN: DHCP Sever enabled\n\r");
-                monitorData.dhcp_countdown = 11;
+                monitorData.wlan_event_hdl = TCPIP_STACK_HandlerRegister(monitorData.wlan_net_hdl, TCPIP_EV_CONN_ALL, MONITOR_TcpipStack_EventHandler, NULL);                
+                monitorData.dhcp_countdown = 11;                
                 TCPIP_DHCP_HandlerRegister(monitorData.eth_net_hdl, MONITOR_DHCP_eth_Handler, &monitorData.dhcp_eth_hParam);
-                monitorData.state = MONITOR_STATE_WAIT_FOR_DHCP;
+                monitorData.state = MONITOR_STATE_WAIT_FOR_ALL_NETS_UP; 
             }
             break;
         }
-
+        
+        case MONITOR_STATE_WAIT_FOR_ALL_NETS_UP:
+            if(monitorData.eth_is_connected && monitorData.wlan_is_connected){
+                monitorData.state = MONITOR_STATE_WAIT_COPY_MAC;
+                monitorData.wlan_alone_countdown = 0;
+            }
+            break;
+                 
+        case MONITOR_STATE_WAIT_COPY_MAC:
+        {
+            TCPIP_MAC_ADDR* pMac;
+            TCPIP_MAC_ADDR macAddr;            
+            
+            /* copy WLAN MAC address to ETH  */
+            pMac = (TCPIP_MAC_ADDR*)TCPIP_STACK_NetAddressMac(monitorData.eth_net_hdl);
+            TCPIP_Helper_MACAddressToString(pMac, monitorData.EthMACAddrBuff, sizeof(monitorData.EthMACAddrBuff));
+            SYS_CONSOLE_PRINT("ETH MAC Address: %s\r\n", monitorData.EthMACAddrBuff);            
+            pMac = (TCPIP_MAC_ADDR*)TCPIP_STACK_NetAddressMac(monitorData.wlan_net_hdl);
+            TCPIP_Helper_MACAddressToString(pMac, monitorData.WlanMACAddrBuff, sizeof(monitorData.WlanMACAddrBuff));
+            SYS_CONSOLE_PRINT("WLAN MAC Address: %s\r\n", monitorData.WlanMACAddrBuff);            
+            TCPIP_Helper_StringToMACAddress(monitorData.WlanMACAddrBuff, macAddr.v);            
+            TCPIP_STACK_NetAddressMacSet(monitorData.eth_net_hdl, &macAddr);
+            
+            TCPIP_DHCP_Enable(monitorData.eth_net_hdl);
+            monitorData.state = MONITOR_STATE_WAIT_FOR_DHCP;
+        }
+            break;
+        
+            
         case MONITOR_STATE_WAIT_FOR_DHCP:
         {
-            if (TCPIP_DHCP_IsBound(monitorData.eth_net_hdl) == true) {
-                if (MONITOR_Check_For_New_DHCP_Client_Lease(monitorData.eth_net_hdl, &monitorData.eth_ip_addr) == true) {
-                    SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
-                    SYS_CONSOLE_PRINT("WLAN: DHCP Server Disabled\n\r");
-                    TCPIP_DHCPS_Disable(monitorData.wlan_net_hdl);                    
-                    SYS_CONSOLE_PRINT("Connected to Network with DHCP Server\n\r");
-                    monitorData.state = MONITOR_STATE_SERVICE_TASKS;
-                }
+            IPV4_ADDR ipAddr;          
+            IPV4_ADDR  ipMask;
+            TCPIP_MAC_ADDR macAddr;
+            if (TCPIP_DHCP_IsBound(monitorData.eth_net_hdl) == true) {                
+                
+                /* copy new IP Address for ETH to WLAN*/
+                ipAddr.Val = TCPIP_STACK_NetAddress(monitorData.eth_net_hdl);
+                TCPIP_Helper_IPAddressToString(&ipAddr, monitorData.EthIPAddrBuff, sizeof (monitorData.EthIPAddrBuff));
+                ipMask.Val = TCPIP_STACK_NetMask(monitorData.eth_net_hdl);
+                /* copy new Netmask for ETH to WLAN*/
+                TCPIP_Helper_StringToIPAddress(monitorData.EthIPAddrBuff,&ipAddr);
+                TCPIP_STACK_NetAddressSet(monitorData.wlan_net_hdl, &ipAddr, &ipMask, true);
+                /* Restore original MAC Address of ETH*/                
+                TCPIP_Helper_StringToMACAddress(monitorData.EthMACAddrBuff, macAddr.v);
+                TCPIP_STACK_NetAddressMacSet(monitorData.eth_net_hdl, &macAddr);                            
+                /* Restart DHCP Client on ETH */
+                TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
+                TCPIP_DHCP_Enable(monitorData.eth_net_hdl);
+                
+                monitorData.state = MONITOR_STATE_SERVICE_TASKS;
             }
             if(monitorData.dhcp_countdown==0){
                 SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+                TCPIP_Helper_StringToMACAddress(monitorData.EthMACAddrBuff, macAddr.v);
+                TCPIP_STACK_NetAddressMacSet(monitorData.eth_net_hdl, &macAddr);                
                 TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
                 SYS_CONSOLE_PRINT("ETH: DHCP Client Disabled\n\r");
                 TCPIP_DHCPS_Enable(monitorData.eth_net_hdl);                
                 SYS_CONSOLE_PRINT("ETH: DHCP Server Enabled\n\r");
+                TCPIP_DHCPS_Enable(monitorData.wlan_net_hdl);                
+                SYS_CONSOLE_PRINT("WLAN: DHCP Server Enabled\n\r");                
                 SYS_CONSOLE_PRINT("Connected to Host\n\r");
                 monitorData.state = MONITOR_STATE_SERVICE_TASKS;
-            }
-            break;
-        }            
-         
+            }            
+        }
+        
         case MONITOR_STATE_SERVICE_TASKS:
         {            
             break;
@@ -462,6 +509,8 @@ void MONITOR_TcpipStack_EventHandler(TCPIP_NET_HANDLE hNet, TCPIP_EVENT event, c
              monitorData.eth_is_connected = true;
              SYS_CONSOLE_PRINT(" Ethernet\r\n");
         } else if (hNet == monitorData.wlan_net_hdl) {
+            monitorData.wlan_is_connected = true;
+            monitorData.wlan_alone_countdown = 10;
             SYS_CONSOLE_PRINT("Wlan \r\n");
         }
     } else if (event & TCPIP_EV_CONN_LOST) {
@@ -517,6 +566,27 @@ void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evTyp
     }
 }
 
+
+char *states_str[] = {
+    "MONITOR_STATE_INIT",
+    "MONITOR_STATE_WAIT_FOR_TCP_STACK_READY",
+    "MONITOR_STATE_WAIT_FOR_DHCP",
+    "MONITOR_STATE_WAIT_FOR_ALL_NETS_UP",
+    "MONITOR_STATE_WAIT_COPY_MAC",
+    "MONITOR_STATE_SERVICE_TASKS"
+};
+
+void MONITOR_Print_State_Change(void) {
+    static MONITOR_STATES states = MONITOR_STATE_EMPTY;
+    if (states != monitorData.state) {
+        states = monitorData.state;
+        SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
+        SYS_CONSOLE_PRINT("New Monitor State: %s\n\r", states_str[states]);
+    }
+}
+
+
+                
 /*******************************************************************************
  End of File
  */

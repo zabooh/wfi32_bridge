@@ -704,7 +704,7 @@ static uint32_t SYS_WIFI_ExecuteBlock
                             TCPIP_DHCP_Disable(netHdl);
                         }
                         /* Enable DHCP Server in AP mode */
-                        TCPIP_DHCPS_Enable(netHdl);
+                        //TCPIP_DHCPS_Enable(netHdl); // no DHCP Server active at startup
                     }                
                     wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_CONNECT_REQ;
                     OSAL_SEM_Post(&g_wifiSrvcSemaphore);

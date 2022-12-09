@@ -1136,6 +1136,14 @@ static void DHCPReplyToDiscovery(TCPIP_NET_IF *pNetIf,BOOTP_HEADER *Header,DHCP_
     // Client MAC address
     memcpy(&rxHeader.ClientMAC,&Header->ClientMAC,sizeof(TCPIP_MAC_ADDR));
 
+    {
+        char MACaddrBuff[20];
+        TCPIP_Helper_MACAddressToString(&rxHeader.ClientMAC, MACaddrBuff, sizeof (MACaddrBuff));
+        char IPaddrBuff[20];
+        TCPIP_Helper_IPAddressToString(&rxHeader.YourIP, IPaddrBuff, sizeof (IPaddrBuff));        
+        SYS_CONSOLE_PRINT("DHCPS New Lease: %08x %s %s\n\r", pNetIf, MACaddrBuff , IPaddrBuff);
+    }
+    
     // copy the BOOT RX header contents to the processing Buffer
     TCPIP_DHCPS_CopyDataArrayToProcessBuff((uint8_t*)&rxHeader,&putBuffer,sizeof(BOOTP_HEADER));
 
@@ -2300,6 +2308,7 @@ bool TCPIP_DHCPS_Disable(TCPIP_NET_HANDLE hNet)
     {
         return false;
     }
+    SYS_CONSOLE_PRINT("DHCP Server disabled:%08x\n\r",hNet);
 //  Now stop DHCP server
     _DHCPSrvClose(pNetIf,true);
     TCPIP_STACK_AddressServiceEvent(pNetIf, TCPIP_STACK_ADDRESS_SERVICE_DHCPS, TCPIP_STACK_ADDRESS_SERVICE_EVENT_USER_STOP);
@@ -2382,6 +2391,7 @@ static bool _DHCPS_StartOperation(TCPIP_NET_IF* pNetIf,DHCP_SRVR_DCPT* pDhcpsDcp
 
 bool TCPIP_DHCPS_Enable(TCPIP_NET_HANDLE hNet)
 {
+    SYS_CONSOLE_PRINT("DHCP Server enabled:%08x\n\r",hNet);
     return _DHCPS_Enable(hNet, true);
 }
 
