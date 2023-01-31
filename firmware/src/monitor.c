@@ -364,7 +364,7 @@ void MONITOR_Tasks(void) {
                 TCPIP_DHCP_Disable(monitorData.eth_net_hdl);
                 TCPIP_DHCP_Enable(monitorData.eth_net_hdl);
                 
-                monitorData.state = MONITOR_STATE_SERVICE_TASKS;
+                monitorData.state = MONITOR_STATE_WAIT_DCHP_2NDIF;
             }
             if(monitorData.dhcp_countdown==0){
                 SYS_CONSOLE_PRINT("%02d:%02d:%02d  ", monitorData.hours, monitorData.minutes, monitorData.seconds);
@@ -377,8 +377,68 @@ void MONITOR_Tasks(void) {
                 TCPIP_DHCPS_Enable(monitorData.wlan_net_hdl);                
                 SYS_CONSOLE_PRINT("WLAN: DHCP Server Enabled\n\r");                
                 SYS_CONSOLE_PRINT("Connected to Host\n\r");
-                monitorData.state = MONITOR_STATE_SERVICE_TASKS;
+                monitorData.state = MONITOR_STATE_REGISTER_ZEROCONF;
             }            
+        }
+        
+        case MONITOR_STATE_WAIT_DCHP_2NDIF:
+        {            
+            if (TCPIP_DHCP_IsBound(monitorData.eth_net_hdl) == true)
+            {
+                monitorData.state = MONITOR_STATE_REGISTER_ZEROCONF;
+            }
+            break;
+        }
+        
+        case MONITOR_STATE_REGISTER_ZEROCONF:
+        {                       
+            // base name of the service must not exceed 16 bytes long
+            char mDNSServiceNameEth[] = "MyServiceEth";
+            MDNSD_ERR_CODE retvalmdnseth; 
+
+            retvalmdnseth = TCPIP_MDNS_ServiceRegister(
+                            monitorData.eth_net_hdl               // interface net handle  
+                            , mDNSServiceNameEth                  // name of the service
+                            ,"_telnet._tcp.local"                 // type of the service
+                            ,23                                   // TCP or UDP port, at which this service is available
+                            ,((const uint8_t *)"")                // TXT info
+                            ,1                                    // auto rename the service when if needed
+                            ,NULL                                 // no callback function
+                            ,NULL);                               // no application context
+            
+            char mDNSServiceNameWifi[] = "MyServiceWifi";
+            MDNSD_ERR_CODE retvalmdnswifi; 
+
+            retvalmdnswifi = TCPIP_MDNS_ServiceRegister(
+                            monitorData.wlan_net_hdl   // interface net handle  
+                            , mDNSServiceNameWifi                 // name of the service
+                            ,"_telnet._tcp.local"                 // type of the service
+                            ,23                                   // TCP or UDP port, at which this service is available
+                            ,((const uint8_t *)"")                // TXT info
+                            ,1                                    // auto rename the service when if needed
+                            ,NULL                                 // no callback function
+                            ,NULL);                               // no application context
+            
+            if (retvalmdnseth == MDNSD_SUCCESS)
+            {
+                SYS_CONSOLE_PRINT("mDNS Service for Ethernet IF successfully started\n\r");
+            }
+            else
+            {
+                SYS_CONSOLE_PRINT("mDNS Service for Ethernet IF failed to start, error code: %d\n\r", (uint8_t)retvalmdnseth);
+            }
+            
+            if (retvalmdnswifi == MDNSD_SUCCESS)
+            {
+                SYS_CONSOLE_PRINT("mDNS Service for WiFi IF successfully started\n\r");
+            }
+            else
+            {
+                SYS_CONSOLE_PRINT("mDNS Service for WiFi IF failed to start, error code: %d\n\r", (uint8_t)retvalmdnswifi);
+            }
+                        
+            monitorData.state = MONITOR_STATE_SERVICE_TASKS;
+            break;
         }
         
         case MONITOR_STATE_SERVICE_TASKS:
@@ -573,7 +633,10 @@ char *states_str[] = {
     "MONITOR_STATE_WAIT_FOR_DHCP",
     "MONITOR_STATE_WAIT_FOR_ALL_NETS_UP",
     "MONITOR_STATE_WAIT_COPY_MAC",
-    "MONITOR_STATE_SERVICE_TASKS"
+    "MONITOR_STATE_SERVICE_TASKS",
+    "MONITOR_STATE_EMPTY",
+    "MONITOR_STATE_WAIT_DCHP_2NDIF",
+    "MONITOR_STATE_REGISTER_ZEROCONF"
 };
 
 void MONITOR_Print_State_Change(void) {

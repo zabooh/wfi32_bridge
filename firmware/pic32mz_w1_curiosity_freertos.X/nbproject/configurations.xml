@@ -719,6 +719,9 @@
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/tcpip_mac_bridge.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/telnet.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/iperf.c</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/zero_conf_helper.c</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/zero_conf_multicast_dns.c</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/zero_conf_link_local.c</itemPath>
               </logicalFolder>
             </logicalFolder>
           </logicalFolder>
@@ -1014,6 +1017,7 @@
       </logicalFolder>
       <itemPath>Makefile</itemPath>
       <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/harmony-manifest-success.yml</itemPath>
+      <itemPath>pic32mz_w1_curiosity_freertos.mc3</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -1027,7 +1031,7 @@
         <targetDevice>PIC32MZ1025W104132</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>snap</platformTool>
+        <platformTool>PKOBSKDEPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>3.01</languageToolchainVersion>
         <platform>3</platform>
@@ -1209,6 +1213,7 @@
       <C32>
         <property key="additional-warnings" value="true"/>
         <property key="addresss-attribute-use" value="false"/>
+        <property key="appendMe" value=""/>
         <property key="enable-app-io" value="false"/>
         <property key="enable-omit-frame-pointer" value="false"/>
         <property key="enable-symbols" value="true"/>
@@ -1239,6 +1244,7 @@
         <property key="additional-options-chop-files" value="false"/>
       </C32-AR>
       <C32-AS>
+        <property key="appendMe" value=""/>
         <property key="assembler-symbols" value=""/>
         <property key="enable-symbols" value="true"/>
         <property key="exclude-floating-point-library" value="false"/>
@@ -1268,6 +1274,7 @@
         <property key="additional-options-use-response-files" value="false"/>
         <property key="additional-options-write-sla" value="false"/>
         <property key="allocate-dinit" value="false"/>
+        <property key="appendMe" value="-g"/>
         <property key="code-dinit" value="false"/>
         <property key="ebase-addr" value=""/>
         <property key="enable-check-sections" value="false"/>
@@ -1292,7 +1299,8 @@
         <property key="map-file" value="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map"/>
         <property key="no-device-startup-code" value="true"/>
         <property key="no-startup-files" value="false"/>
-        <property key="oXC32ld-extra-opts" value="-mreserve=prog@0x100ff000:0x100fffff"/>
+        <property key="oXC32ld-extra-opts"
+                  value="-mreserve=prog@0x100FF000:0x100FFFFF;-mreserve=prog@0x100ff000:0x100fffff"/>
         <property key="optimization-level" value=""/>
         <property key="preprocessor-macros" value=""/>
         <property key="remove-unused-sections" value="true"/>
@@ -1308,6 +1316,7 @@
       <C32CPP>
         <property key="additional-warnings" value="false"/>
         <property key="addresss-attribute-use" value="false"/>
+        <property key="appendMe" value=""/>
         <property key="check-new" value="false"/>
         <property key="eh-specs" value="true"/>
         <property key="enable-app-io" value="false"/>

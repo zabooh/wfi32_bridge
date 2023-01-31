@@ -100,6 +100,7 @@ THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
 #include "tcpip/src/telnet_manager.h"
 #include "tcpip/src/udp_manager.h"
 #include "tcpip/src/dnss_manager.h"
+#include "tcpip/src/zero_conf_manager.h"
 #include "tcpip/src/lldp_manager.h"
 #include "tcpip/src/iperf_manager.h"
 #include "tcpip/src/tcpip_mac_bridge_manager.h"

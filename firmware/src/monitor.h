@@ -79,7 +79,9 @@ bool MONITOR_Check_For_New_DHCP_Client_Lease(TCPIP_NET_HANDLE net_hdl, IPV4_ADDR
         MONITOR_STATE_WAIT_FOR_ALL_NETS_UP,
         MONITOR_STATE_WAIT_COPY_MAC,
         MONITOR_STATE_SERVICE_TASKS,
-        MONITOR_STATE_EMPTY
+        MONITOR_STATE_EMPTY,
+        MONITOR_STATE_WAIT_DCHP_2NDIF,
+        MONITOR_STATE_REGISTER_ZEROCONF
         /* TODO: Define states used by the application state machine. */
 
     } MONITOR_STATES;
