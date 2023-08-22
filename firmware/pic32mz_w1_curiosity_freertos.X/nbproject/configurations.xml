@@ -688,6 +688,7 @@
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/wdrv_pic32mzw_sta.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/wdrv_pic32mzw_ps.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/wdrv_pic32mzw_custie.c</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/drv_pic32mzw1_tls.c</itemPath>
               </logicalFolder>
             </logicalFolder>
           </logicalFolder>

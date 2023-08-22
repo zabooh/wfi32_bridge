@@ -5,10 +5,10 @@ frameworkPath: ../../../frameworks/app
 processor: PIC32MZ1025W104132
 projectName: pic32mz_w1_curiosity_freertos
 settings:
-  PackageFilter: core;crypto;csp;dev_packs;net;usb;wireless_system_pic32mzw1_wfi32e01;wireless_wifi
+  PackageFilter: core;crypto;csp;Devices;dev_packs;net;usb;wireless_system_pic32mzw1_wfi32e01;wireless_wifi
   FORCE_OPTIMIZATION: 'false'
   GENERATE_BACKUP: 'true'
   TRUSTZONE: 'false'
   CMSISPath: .\dev_packs\arm\CMSIS\5.8.0
   MERGE_STRATEGY: USER_RECENT
-  DFPPath: .\dev_packs\Microchip\PIC32MZ-W_DFP\1.5.203\atdf\PIC32MZ1025W104132.atdf
+  DFPPath: .\dev_packs\Microchip\PIC32MZ-W_DFP\1.6.217\atdf\PIC32MZ1025W104132.atdf
