@@ -11,6 +11,13 @@ children:
       children:
       - type: Dynamic
         attributes: {id: drvMiim, value: _ETH_BASE_ADDRESS}
+  - type: Integer
+    attributes: {id: DRV_MIIM_INSTANCES_NUMBER}
+    children:
+    - type: Values
+      children:
+      - type: Dynamic
+        attributes: {id: drvMiim, value: '0'}
   - type: Menu
     attributes: {id: DRV_MIIM_RTOS_MENU}
     children:
