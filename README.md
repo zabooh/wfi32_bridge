@@ -104,8 +104,8 @@ If the STA then books itself out again<br>
 
 13. When the cable is plugged into a PC, the firmware waits 5 seconds for a response from a DHCP server.<br>
 Since this does not come with a PC, the firmware switches on its own DHCP server and assigns the PC an IP address<br>
-![](screen2.png)
-A STA that registers with the AP then gets an IP with the same network mask, so that the PC and the STA can "see" each other
+![](screen2.png)<br>
+A STA that registers with the AP then gets an IP with the same netwbrork mask, so that the PC and the STA can "see" each other
 ![](screen3.png)
 If the STA-AP connection is interrupted because the STA (smartphone) thinks, for example, that it cannot reach the Internet, then everything starts again automatically until the connection remains stable.<br>
 The restart occurs so quickly that the STAs try to negotiate the connection again independently because the AP requests them to do so. Then the session keys of the WPA encryption are regenerated. All of this happens so quickly that the user doesn't notice anything.<br>
@@ -116,10 +116,11 @@ On the command line there are some commands
 ![](screen4.png)
 
         reset
-    Setzt die Firmware zurück
+    Restarts the Firmware
 
         heap
-    Zeigt die Heap Ausladtung an. Es wird der FreeRTOS Heap verwendet, da dieser Diagnose Funktionen beinhaltet im gegensatz zum Heap Managment der C Runtime Library
+    Displays the heap utilization. The FreeRTOS heap is used because it contains diagnostic functions in contrast to the heap management of the C runtime library
+    ![](heap.png)
         
         dump
     Lists memory contents:
