@@ -18,8 +18,8 @@ https://www.microchip.com/en-us/development-tool/ev12f11a
 
 
 ### LAN8720A PHY Daughter Board: Part Number: AC320004-3<br>
-https://www.microchip.com/en-us/development-tool/AC320004-3
 ![](phy1.png)<br>
+https://www.microchip.com/en-us/development-tool/AC320004-3
 but could be also onw of these<br>
 <table>
 <tr><td> AC320004-2 </td><td> IC PLUS IP101G </td></tr>
@@ -122,11 +122,12 @@ On the command line there are some commands
     Zeigt die Heap Ausladtung an. Es wird der FreeRTOS Heap verwendet, da dieser Diagnose Funktionen beinhaltet im gegensatz zum Heap Managment der C Runtime Library
         
         dump
-    Listet Speicher Inhalte auf
+    Lists memory contents:
     ![](screen5.png)
 
         ston 
-    Switches on a status display that is refreshed once per second in the top two lines
+    Switches on a status display that is refreshed once per second in the top two lines, while the cursor position remains normal.
+    This is realized by VT100 Escape Sequences
     ![](screen6.png)
 
         stof
