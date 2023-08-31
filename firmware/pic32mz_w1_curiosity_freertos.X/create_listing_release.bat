@@ -9,8 +9,6 @@ COPY %REL_FILE%.symbols.txt .
 COPY %REL_FILE%.disassembly.txt .
 COPY %REL_FILE%.map .
 
-break
-
 SET DBG_FILE=.\dist\pic32mz_w1_eth_wifi_freertos\debug\pic32mz_w1_curiosity_freertos.X.debug
 %TOOL%\xc32-readelf -s %DBG_FILE%.elf > %DBG_FILE%.sym
 cmsort /S=7,100  %DBG_FILE%.sym %DBG_FILE%.symbols.txt

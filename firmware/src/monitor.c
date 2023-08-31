@@ -61,6 +61,7 @@ extern int ETHERNET_counter;
 
 void MONITOR_DHCP_eth_Handler(TCPIP_NET_HANDLE hNet, TCPIP_DHCP_EVENT_TYPE evType, const void* param);
 void MONITOR_Print_State_Change(void);
+bool debug_CMDInit(void);
 
 // *****************************************************************************
 // *****************************************************************************
@@ -148,6 +149,8 @@ void MONITOR_Initialize(void) {
 
     monitorData.timer_sec_hdl = SYS_TIME_TimerCreate(0, SYS_TIME_MSToCount(MONITOR_TIMER_SEC_COUNT), &MONITOR_TimerSecCallback, (uintptr_t) NULL, SYS_TIME_PERIODIC);
     SYS_TIME_TimerStart(monitorData.timer_sec_hdl);
+    
+    debug_CMDInit();
 }
 
 void MONITOR_CheckForDHCPLease(void) {
@@ -283,7 +286,7 @@ void MONITOR_Tasks(void) {
                 SYS_CONSOLE_PRINT(
                         "======================================================\n\r");
                 SYS_CONSOLE_PRINT("L2 Bridge Build Time  " __DATE__ " " __TIME__ "\n\r");
-                SYS_CONSOLE_PRINT("Branch: 202212090919\n\r");
+                SYS_CONSOLE_PRINT("Tag: v1.4.0 (Release Candidate)\n\r");
                 SYS_CONSOLE_PRINT("Device ID: %08x\n\r", DeviceID);
                 SYS_CONSOLE_PRINT("Monitor Task State Run\n\r");
                 if (last_expt_msg.magic == MAGIC_CODE) {
@@ -649,7 +652,112 @@ void MONITOR_Print_State_Change(void) {
 }
 
 
+void     CommandDump(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Dump Memory
+void     CommandHeap(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Display Heap Statistics
+void     CommandSton(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Status On
+void     CommandStof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Satus Off
+//void     CommandDhof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // 
+//void     CommandHelp(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // help
                 
+const SYS_CMD_DESCRIPTOR debug_cmd_tbl[] = {
+    {"heap",    CommandHeap,    ": heap statistics"},    
+    {"dump",    CommandDump,    ": dump memory"},        
+    {"ston",    CommandSton,    ": status on"},        
+    {"stof",    CommandStof,    ": status off"},            
+//    {"dhof",    CommandDhof,    ": all dhcp services off"},            
+//    {"help",    CommandHelp,    ": help"},
+};
+
+bool debug_CMDInit(void) {
+    bool ret = false;
+
+    if (!SYS_CMD_ADDGRP(debug_cmd_tbl, sizeof (debug_cmd_tbl) / sizeof (*debug_cmd_tbl), "debug", ": Debug Commands")) {
+        ret = true;
+    }
+    return ret;
+}
+
+void CommandHeap(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv) {
+    HeapStats_t xHeapStats;
+    const void* cmdIoParam = pCmdIO->cmdIoParam;
+    (*pCmdIO->pCmdApi->msg)(cmdIoParam, "\n\rHeap Statistics\r\n");
+
+    vPortGetHeapStats(&xHeapStats);
+    
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "configTOTAL_HEAP_SIZE           : %d\r\n", configTOTAL_HEAP_SIZE);        
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xAvailableHeapSpaceInBytes      : %d\r\n", xHeapStats.xAvailableHeapSpaceInBytes);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xSizeOfLargestFreeBlockInBytes  : %d\r\n", xHeapStats.xSizeOfLargestFreeBlockInBytes);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xSizeOfSmallestFreeBlockInBytes : %d\r\n", xHeapStats.xSizeOfSmallestFreeBlockInBytes);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfFreeBlocks             : %d\r\n", xHeapStats.xNumberOfFreeBlocks);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xMinimumEverFreeBytesRemaining  : %d\r\n", xHeapStats.xMinimumEverFreeBytesRemaining);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfSuccessfulAllocations  : %d\r\n", xHeapStats.xNumberOfSuccessfulAllocations);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfSuccessfulFrees        : %d\r\n", xHeapStats.xNumberOfSuccessfulFrees);
+ //   (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfFaileddAllocations     : %d\r\n", xHeapStats.xNumberOfFaileddAllocations);
+
+}
+
+void CommandDump(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv) {
+    const void* cmdIoParam = pCmdIO->cmdIoParam;
+    uint32_t addr;
+    uint32_t count;
+    uint32_t ix, jx;
+    uint8_t *puc;
+    char str[64];
+    int flag = 0;
+
+    addr = strtoul(argv[1], NULL, 16);
+    count = strtoul(argv[2], NULL, 16);
+    puc = (uint8_t *) addr;
+    puc = (uint8_t *) addr;
+
+    jx = 0;
+    for (ix = 0; ix < count; ix++) {
+        if ((ix % 16) == 0) {
+            if(flag == 1){
+                str[16] = 0;
+                (*pCmdIO->pCmdApi->print)(cmdIoParam, "   %s", str);
+            }
+            (*pCmdIO->pCmdApi->print)(cmdIoParam, "\n\r%08x: ", puc);
+            flag = 1;
+            jx = 0;
+        }
+        (*pCmdIO->pCmdApi->print)(cmdIoParam, " %02x", *puc);
+        if ( (*puc > 31) && (*puc < 127) )
+            str[jx++] = *puc;
+        else
+            str[jx++] = '.';
+        puc++;
+    }
+    str[jx] = 0;
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "   %s", str);
+    (*pCmdIO->pCmdApi->print)(cmdIoParam, "\n\rReady\n\r");
+}
+
+
+
+void CommandSton(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
+{
+    const void* cmdIoParam = pCmdIO->cmdIoParam;
+    (*pCmdIO->pCmdApi->msg)(cmdIoParam, "\r\n" " *** Status On ***\r\n" );
+    MONITOR_SetDisplayStatus(true);
+}
+
+
+void CommandStof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
+{
+    const void* cmdIoParam = pCmdIO->cmdIoParam;
+    (*pCmdIO->pCmdApi->msg)(cmdIoParam, "\r\n" " *** Status Off ***\r\n" );
+    MONITOR_SetDisplayStatus(false);
+}
+
+//void DisableAllDHCPx(void);
+//
+//static void CommandDhof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
+//{
+//    DisableAllDHCPx();
+//}
+
+
 /*******************************************************************************
  End of File
  */

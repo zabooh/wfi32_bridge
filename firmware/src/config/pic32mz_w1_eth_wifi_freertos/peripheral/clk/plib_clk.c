@@ -85,11 +85,11 @@
 #define EWPLLCON_MSK 0x0438080c
 #define EWPLL_PWRON 0x808
 
-static void DelayUs ( uint32_t delay_us)
+static void DelayMs ( uint32_t delay_ms)
 {
     uint32_t startCount, endCount;
     /* Calculate the end count for the given delay */
-    endCount=(CORE_TIMER_FREQ/1000000)*delay_us;
+    endCount=(CORE_TIMER_FREQ/1000)*delay_ms;
     startCount=_CP0_GET_COUNT();
     while((_CP0_GET_COUNT()-startCount)<endCount);
 }
@@ -179,11 +179,11 @@ void CLK_Initialize( void )
 		{
 			EWPLLCON = 0x808; // Start with PWR-OFF PLL
 			SPLLCON  = 0x808; // Start with PWR-OFF PLL
-			DelayUs(250);
+			DelayMs(5);
 
 			CFGCON2  |= 0x300; // Start with POSC Turned OFF
 			/* if POSC was on give some time for POSC to shut off */
-			DelayUs(200);
+			DelayMs(5);
 			/* make sure we properly reset SPI to a known state */
 			*RFSPICTL = 0x80000022;
 			/* make sure we properly take out of reset */
@@ -203,25 +203,25 @@ void CLK_Initialize( void )
                 wifi_spi_write(0x1e, 0x510); /* MBIAS reference adjustment */
                 wifi_spi_write(0x82, 0x6400); /* XTAL LDO feedback divider (1.3+v) */
 			}
-            DelayUs(200);
+            DelayMs(2);
 			/* Enable POSC */
 			CFGCON2  &= 0xFFFFFCFF; // enable POSC
-			DelayUs(300);
+			DelayMs(5);
 
 			/*Configure SPLL*/
 			CFGCON3 = 10;
 			CFGCON0bits.SPLLHWMD = 1;
 
-			/* SPLLBSWSEL   = 5   */
+			/* SPLLBSWSEL   = 1   */
 			/* SPLLPWDN     = PLL_ON     */
-			/* SPLLPOSTDIV1 = 4 */
+			/* SPLLPOSTDIV1 = 6 */
 			/* SPLLFLOCK    = NO_ASSERT    */
 			/* SPLLRST      = NO_ASSERT      */
-			/* SPLLFBDIV    = 20  */
-			/* SPLLREFDIV   = 1   */
+			/* SPLLFBDIV    = 150  */
+			/* SPLLREFDIV   = 5   */
 			/* SPLLICLK     = POSC     */
 			/* SPLL_BYP     = NO_BYPASS     */
-			SPLLCON = 0x414045;
+			SPLLCON = 0x1496061;
 
 			/* OSWEN    = SWITCH_COMPLETE    */
 			/* SOSCEN   = OFF   */
@@ -264,7 +264,7 @@ void CLK_Initialize( void )
 		/* ETHCLKOUTEN   = ENABLED */
 		/* EWPLL_BYP     = NO_BYPASS */
 		EWPLLCON = 0x15320206 ^ EWPLLCON_MSK;
-		DelayUs(250);
+		DelayMs(1);
 		EWPLLCON &= ~EWPLL_PWRON;
 		/****************************************************************
 		* check to see if PLL locked; indicates POSC must have started
@@ -295,14 +295,14 @@ void CLK_Initialize( void )
     {
 
 		CFGCON2  |= 0x300; // Start with POSC Turned OFF
-		DelayUs(300);
+		DelayMs(2);
 
 		/* make sure we properly reset SPI to a known state */
 		*RFSPICTL = 0x80000022;
 		/* now wifi is properly reset enable POSC */
 		CFGCON2  &= 0xFFFFFCFF; // enable POSC
 
-		DelayUs(250);
+		DelayMs(2);
 
         /* make sure we properly take out of reset */
         *RFSPICTL = 0x80000002;
@@ -320,16 +320,16 @@ void CLK_Initialize( void )
 		CFGCON3 = 10;
         CFGCON0bits.SPLLHWMD = 1;
 		/* SPLLCON = 0x01496869 */
-		/* SPLLBSWSEL   = 5   */
+		/* SPLLBSWSEL   = 1   */
 		/* SPLLPWDN     = PLL_ON     */
-		/* SPLLPOSTDIV1 = 4 */
+		/* SPLLPOSTDIV1 = 6 */
 		/* SPLLFLOCK    = NO_ASSERT    */
 		/* SPLLRST      = NO_ASSERT      */
-		/* SPLLFBDIV    = 20  */
-		/* SPLLREFDIV   = 1   */
+		/* SPLLFBDIV    = 150  */
+		/* SPLLREFDIV   = 5   */
 		/* SPLLICLK     = POSC     */
 		/* SPLL_BYP     = NO_BYPASS     */
-		SPLLCON = 0x414045;
+		SPLLCON = 0x1496061;
 
 
 		/* Configure UPLL */
@@ -385,6 +385,10 @@ void CLK_Initialize( void )
 
 		while( OSCCONbits.OSWEN );        /* wait for indication of successful clock change before proceeding */
 	}
+    /* Peripheral Bus 4 is by default enabled, set its divisor */
+    /* PBDIV = 10 */
+    PB4DIVbits.PBDIV = 9;
+
 
   
 

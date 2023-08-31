@@ -50,6 +50,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system/wifi/sys_wifi.h"
 #include "configuration.h"
 #include "system/wifiprov/sys_wifiprov.h"
+
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Type Definitions
@@ -118,6 +120,9 @@ static    char                  g_wifiSrvcProvCookieVal = 100;
 
 /* Wi-Fi Provision Service Object */
 static    SYS_MODULE_OBJ        g_wifiSrvcProvObj;
+
+/* RegDomain set status */
+bool      g_isRegDomainSetReq = false;
 
 /* Semaphore for Critical Section */
 static    OSAL_SEM_HANDLE_TYPE  g_wifiSrvcSemaphore;
@@ -345,8 +350,7 @@ static void SYS_WIFI_WaitForConnSTAIP(uintptr_t context)
             SYS_WIFI_STA_CONNECTION_INFO *staConnInfo = (SYS_WIFI_STA_CONNECTION_INFO *)context;
             if(0 == memcmp(&dhcpsLeaseEntry.hwAdd, staConnInfo->wifiSrvcStaAppInfo.macAddr, WDRV_PIC32MZW_MAC_ADDR_LEN))
             {               
-                //SYS_CONSOLE_PRINT("Connected STA   IP:%d.%d.%d.%d   MAC: %02x:%02x:%02x:%02x:%02x:%02x\r\n", dhcpsLeaseEntry.ipAddress.v[0], dhcpsLeaseEntry.ipAddress.v[1], dhcpsLeaseEntry.ipAddress.v[2], dhcpsLeaseEntry.ipAddress.v[3],
-                //            dhcpsLeaseEntry.hwAdd.v[0], dhcpsLeaseEntry.hwAdd.v[1], dhcpsLeaseEntry.hwAdd.v[2], dhcpsLeaseEntry.hwAdd.v[3], dhcpsLeaseEntry.hwAdd.v[4], dhcpsLeaseEntry.hwAdd.v[5]);
+                SYS_CONSOLE_PRINT("\r\nConnected STA IP:%d.%d.%d.%d \r\n", dhcpsLeaseEntry.ipAddress.v[0], dhcpsLeaseEntry.ipAddress.v[1], dhcpsLeaseEntry.ipAddress.v[2], dhcpsLeaseEntry.ipAddress.v[3]);
                 staConnInfo->wifiSrvcStaAppInfo.ipAddr.Val = dhcpsLeaseEntry.ipAddress.Val;
                 staConnInfo->wifiSrvcSTAConnUpdate = true; 
                 SYS_WIFI_SetTaskstatus(SYS_WIFI_STATUS_WAIT_FOR_STA_IP);
@@ -375,7 +379,7 @@ static void SYS_WIFI_APConnCallBack
             if (WDRV_PIC32MZW_STATUS_OK == WDRV_PIC32MZW_AssocPeerAddressGet(assocHandle, &wifiSrvcStaConnMac)) 
             {
                 uint8_t idx = 0;
-                SYS_CONSOLE_PRINT("Connected STA MAC Address=%x:%x:%x:%x:%x:%x\n\r", wifiSrvcStaConnMac.addr[0], wifiSrvcStaConnMac.addr[1], wifiSrvcStaConnMac.addr[2], wifiSrvcStaConnMac.addr[3], wifiSrvcStaConnMac.addr[4], wifiSrvcStaConnMac.addr[5]);
+                SYS_CONSOLE_PRINT("\r\nConnected STA MAC Address=%x:%x:%x:%x:%x:%x", wifiSrvcStaConnMac.addr[0], wifiSrvcStaConnMac.addr[1], wifiSrvcStaConnMac.addr[2], wifiSrvcStaConnMac.addr[3], wifiSrvcStaConnMac.addr[4], wifiSrvcStaConnMac.addr[5]);
 
                 /* Store the connected STA Info in the STA Conn Array */
                 for(idx = 0; idx < SYS_WIFI_MAX_STA_SUPPORTED; idx++)
@@ -424,7 +428,7 @@ static void SYS_WIFI_APConnCallBack
 
 
 /* Wi-Fi driver callback received on setting Regulatory domain */
-static void SYS_WIFI_SetRegDomainCallback
+static void SYS_WIFI_RegDomainCallback
 (
     DRV_HANDLE handle, 
     uint8_t index, 
@@ -436,7 +440,12 @@ static void SYS_WIFI_SetRegDomainCallback
     if ((1 != index) || (1 != ofTotal) || (false == isCurrent) || (NULL == pRegDomInfo)) 
     {
         SYS_CONSOLE_MESSAGE("Regulatory domain set unsuccessful\r\n");
-    } 
+    }  
+    if(!memcmp(pRegDomInfo,SYS_WIFI_GetCountryCode(),strlen((const char *)pRegDomInfo)))
+    {
+        g_isRegDomainSetReq = true;
+    }
+
 }
 
 
@@ -542,25 +551,6 @@ static SYS_WIFI_RESULT SYS_WIFI_ConfigReq(void)
                 }
                 break;
             }
-
-            case SYS_WIFI_WPA2WPA3MIXED:
-            {
-                if (WDRV_PIC32MZW_STATUS_OK != WDRV_PIC32MZW_AuthCtxSetPersonal(&g_wifiSrvcObj.wifiSrvcAuthCtx, pwd, pwdLen, WDRV_PIC32MZW_AUTH_TYPE_WPA2WPA3_PERSONAL)) 
-                {
-                    ret = SYS_WIFI_CONFIG_FAILURE;
-                }
-                break;
-            }
-
-            case SYS_WIFI_WPA3:
-            {
-                if (WDRV_PIC32MZW_STATUS_OK != WDRV_PIC32MZW_AuthCtxSetPersonal(&g_wifiSrvcObj.wifiSrvcAuthCtx, pwd, pwdLen, WDRV_PIC32MZW_AUTH_TYPE_WPA3_PERSONAL)) 
-                {
-                    ret = SYS_WIFI_CONFIG_FAILURE;
-                }
-                break;
-            }
-
             case SYS_WIFI_WEP:
             {
                ret = SYS_WIFI_CONFIG_FAILURE; 
@@ -658,7 +648,11 @@ static uint32_t SYS_WIFI_ExecuteBlock
                     wifiSrvcObj->wifiSrvcDrvHdl = WDRV_PIC32MZW_Open(0, 0);
                     if (DRV_HANDLE_INVALID != wifiSrvcObj->wifiSrvcDrvHdl) 
                     {
-                        wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_AUTOCONNECT_WAIT;
+                        if (WDRV_PIC32MZW_STATUS_OK == WDRV_PIC32MZW_RegDomainGet(wifiSrvcObj->wifiSrvcDrvHdl,WDRV_PIC32MZW_REGDOMAIN_SELECT_CURRENT,SYS_WIFI_RegDomainCallback))
+                        {
+                            SYS_WIFI_PrintWifiConfig();
+                            wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_AUTOCONNECT_WAIT;
+                        }
                     }
                     OSAL_SEM_Post(&g_wifiSrvcSemaphore);
                 }
@@ -671,13 +665,19 @@ static uint32_t SYS_WIFI_ExecuteBlock
                 {
                     /* When user has enabled the auto connect feature of the Wi-Fi service in MHC(STA mode).
                        or in AP mode, below condition will be always true */
+
                     if (true == SYS_WIFI_GetAutoConnect()) 
                     {
-                        if (WDRV_PIC32MZW_STATUS_OK == WDRV_PIC32MZW_RegDomainSet(wifiSrvcObj->wifiSrvcDrvHdl, SYS_WIFI_GetCountryCode(), SYS_WIFI_SetRegDomainCallback)) 
+                        if(g_isRegDomainSetReq == true)
                         {
-                            SYS_WIFI_PrintWifiConfig();
-                            wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_TCPIP_WAIT_FOR_TCPIP_INIT;
+
+                            if (WDRV_PIC32MZW_STATUS_OK == WDRV_PIC32MZW_RegDomainSet(wifiSrvcObj->wifiSrvcDrvHdl, SYS_WIFI_GetCountryCode(), SYS_WIFI_RegDomainCallback)) 
+                            {
+                                
+                                g_isRegDomainSetReq = false;
+                            }
                         }
+                        wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_TCPIP_WAIT_FOR_TCPIP_INIT;
                     }
                     OSAL_SEM_Post(&g_wifiSrvcSemaphore);
                 }
@@ -704,7 +704,7 @@ static uint32_t SYS_WIFI_ExecuteBlock
                             TCPIP_DHCP_Disable(netHdl);
                         }
                         /* Enable DHCP Server in AP mode */
-                        //TCPIP_DHCPS_Enable(netHdl); // no DHCP Server active at startup
+                        TCPIP_DHCPS_Enable(netHdl);
                     }                
                     wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_CONNECT_REQ;
                     OSAL_SEM_Post(&g_wifiSrvcSemaphore);
@@ -720,6 +720,8 @@ static uint32_t SYS_WIFI_ExecuteBlock
                     {
                         if (SYS_WIFI_SUCCESS == SYS_WIFI_ConfigReq()) 
                         {
+						
+
                             if (SYS_WIFI_SUCCESS == SYS_WIFI_ConnectReq()) 
                             {
                                 wifiSrvcObj->wifiSrvcStatus = SYS_WIFI_STATUS_WAIT_FOR_AP_IP;
@@ -730,6 +732,8 @@ static uint32_t SYS_WIFI_ExecuteBlock
                 }
                 break;
             }
+
+
             case SYS_WIFI_STATUS_WAIT_FOR_AP_IP:
             {
                 apIpAddr.Val = TCPIP_STACK_NetAddress(netHdl);

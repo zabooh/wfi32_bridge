@@ -189,12 +189,6 @@ static const KEY_SEQ_DCPT keySeqTbl[] =
 static void     CommandReset(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);
 static void     CommandQuit(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // command quit
 static void     CommandHelp(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // help
-static void     CommandDump(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Dump Memory
-static void     CommandHeap(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Display Heap Statistics
-static void     CommandSton(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Status On
-static void     CommandStof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // Satus Off
-
-static void     CommandDhof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv);              // 
 
 static int      StringToArgs(char *str, char *argv[], size_t argvSize); 
 static void     ParseCmdBuffer(SYS_CMD_IO_DCPT* pCmdIO);      // parse the command buffer
@@ -227,11 +221,6 @@ static const SYS_CMD_DESCRIPTOR    _builtinCmdTbl[]=
 {
     {"reset",   CommandReset,   ": Reset host"},
     {"q",       CommandQuit,    ": quit command processor"},
-    {"heap",    CommandHeap,    ": heap statistics"},    
-    {"dump",    CommandDump,    ": dump memory"},        
-    {"ston",    CommandSton,    ": status on"},        
-    {"stof",    CommandStof,    ": status off"},            
-    {"dhof",    CommandDhof,    ": all dhcp services off"},            
     {"help",    CommandHelp,    ": help"},
 };
 
@@ -281,8 +270,6 @@ bool SYS_CMD_Initialize(const SYS_MODULE_INIT * const init )
 
 
     cmdIODevList.head = cmdIODevList.tail = 0;
-
-    SYS_CMDIO_ADD(&sysConsoleApi, &initConfig->consoleCmdIOParam, initConfig->consoleCmdIOParam);
 
     _cmdInitData.consoleIndex = initConfig->consoleIndex;
 
@@ -346,6 +333,20 @@ bool  SYS_CMD_ADDGRP(const SYS_CMD_DESCRIPTOR* pCmdTbl, int nCmds, const char* g
 bool SYS_CMD_Tasks(void)
 {
     SYS_CMD_IO_DCPT* pCmdIO;
+    static bool error_reported = false;
+
+    if (cmdIODevList.head == 0)
+    {
+        if(SYS_CMDIO_ADD(&sysConsoleApi, &_cmdInitData.consoleCmdIOParam, _cmdInitData.consoleCmdIOParam) == 0)
+        {
+            if(error_reported == false)
+            {
+                SYS_ERROR_PRINT(SYS_ERROR_WARNING, "Failed to create the Console API\r\n");
+                error_reported = true;
+            }
+        }
+    }
+
     for(pCmdIO = cmdIODevList.head; pCmdIO != 0; pCmdIO = pCmdIO->next)
     {
         RunCmdTask(pCmdIO);
@@ -867,97 +868,6 @@ static void CommandHelp(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
     }
 
 }
-
-
- void MONITOR_SetDisplayStatus(bool flag);
-
-static void CommandSton(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
-{
-    const void* cmdIoParam = pCmdIO->cmdIoParam;
-    (*pCmdIO->pCmdApi->msg)(cmdIoParam, LINE_TERM " *** Status On ***\r\n" );
-    MONITOR_SetDisplayStatus(true);
-}
-
-static void CommandStof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
-{
-    const void* cmdIoParam = pCmdIO->cmdIoParam;
-    (*pCmdIO->pCmdApi->msg)(cmdIoParam, LINE_TERM " *** Status Off ***\r\n" );
-    MONITOR_SetDisplayStatus(false);
-}
-
-void DisableAllDHCPx(void);
-
-static void CommandDhof(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv)
-{
-    DisableAllDHCPx();
-}
-
-
-static void CommandHeap(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv) {
-    HeapStats_t xHeapStats;
-    const void* cmdIoParam = pCmdIO->cmdIoParam;
-    (*pCmdIO->pCmdApi->msg)(cmdIoParam, "\n\rHeap Statistics\r\n");
-
-    vPortGetHeapStats(&xHeapStats);
-    
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "configTOTAL_HEAP_SIZE           : %d\r\n", configTOTAL_HEAP_SIZE);        
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xAvailableHeapSpaceInBytes      : %d\r\n", xHeapStats.xAvailableHeapSpaceInBytes);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xSizeOfLargestFreeBlockInBytes  : %d\r\n", xHeapStats.xSizeOfLargestFreeBlockInBytes);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xSizeOfSmallestFreeBlockInBytes : %d\r\n", xHeapStats.xSizeOfSmallestFreeBlockInBytes);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfFreeBlocks             : %d\r\n", xHeapStats.xNumberOfFreeBlocks);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xMinimumEverFreeBytesRemaining  : %d\r\n", xHeapStats.xMinimumEverFreeBytesRemaining);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfSuccessfulAllocations  : %d\r\n", xHeapStats.xNumberOfSuccessfulAllocations);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfSuccessfulFrees        : %d\r\n", xHeapStats.xNumberOfSuccessfulFrees);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "xNumberOfFaileddAllocations     : %d\r\n", xHeapStats.xNumberOfFaileddAllocations);
-
-//    {
-//        volatile int xx,yy,zz;
-//        xx = 10;
-//        yy = 0;
-//        zz = xx / yy;
-//        yy = zz;
-//    }
-//    
-}
-
-static void CommandDump(SYS_CMD_DEVICE_NODE* pCmdIO, int argc, char** argv) {
-    const void* cmdIoParam = pCmdIO->cmdIoParam;
-    uint32_t addr;
-    uint32_t count;
-    uint32_t ix, jx;
-    uint8_t *puc;
-    char str[64];
-    int flag = 0;
-
-    addr = strtoul(argv[1], NULL, 16);
-    count = strtoul(argv[2], NULL, 16);
-    puc = (uint8_t *) addr;
-    puc = (uint8_t *) addr;
-
-    jx = 0;
-    for (ix = 0; ix < count; ix++) {
-        if ((ix % 16) == 0) {
-            if(flag == 1){
-                str[16] = 0;
-                (*pCmdIO->pCmdApi->print)(cmdIoParam, "   %s", str);
-            }
-            (*pCmdIO->pCmdApi->print)(cmdIoParam, "\n\r%08x: ", puc);
-            flag = 1;
-            jx = 0;
-        }
-        (*pCmdIO->pCmdApi->print)(cmdIoParam, " %02x", *puc);
-        if ( (*puc > 31) && (*puc < 127) )
-            str[jx++] = *puc;
-        else
-            str[jx++] = '.';
-        puc++;
-    }
-    str[jx] = 0;
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "   %s", str);
-    (*pCmdIO->pCmdApi->print)(cmdIoParam, "\n\rReady\n\r");
-}
-
-
 
 static void ParseCmdBuffer(SYS_CMD_IO_DCPT* pCmdIO)
 {

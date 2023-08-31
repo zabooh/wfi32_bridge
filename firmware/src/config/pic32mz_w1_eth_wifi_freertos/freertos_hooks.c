@@ -59,7 +59,7 @@
 
 extern EXCEPT_MSG last_expt_msg;
 
-void vApplicationStackOverflowHook( TaskHandle_t pxTask, signed char *pcTaskName )
+void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 {
    ( void ) pcTaskName;
    ( void ) pxTask;
