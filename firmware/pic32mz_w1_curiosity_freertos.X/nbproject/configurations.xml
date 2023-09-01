@@ -200,6 +200,8 @@
                   <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/include/wdrv_pic32mzw_sta.h</itemPath>
                   <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/include/wdrv_pic32mzw_ps.h</itemPath>
                   <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/include/wdrv_pic32mzw_custie.h</itemPath>
+                  <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/include/wdrv_pic32mzw_ie.h</itemPath>
+                  <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/include/drv_pic32mzw1_tls.h</itemPath>
                 </logicalFolder>
               </logicalFolder>
             </logicalFolder>
@@ -285,6 +287,8 @@
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/lldp_tlv.h</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/tcpip_mac_bridge_manager.h</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/tcpip_mac_bridge_private.h</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/dhcp_server_private.h</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/src/dhcp_server_manager.h</itemPath>
               </logicalFolder>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/tcpip_common_ports.h</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/tcpip_mac.h</itemPath>
@@ -331,6 +335,7 @@
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/tcpip.h</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/tcpip_mac_bridge.h</itemPath>
               <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/tcpip_ethernet.h</itemPath>
+              <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/library/tcpip/dhcp_server.h</itemPath>
             </logicalFolder>
           </logicalFolder>
           <logicalFolder name="f5" displayName="net_pres" projectFiles="true">
@@ -689,6 +694,7 @@
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/wdrv_pic32mzw_ps.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/wdrv_pic32mzw_custie.c</itemPath>
                 <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/drv_pic32mzw1_tls.c</itemPath>
+                <itemPath>../src/config/pic32mz_w1_eth_wifi_freertos/driver/wifi/pic32mzw1/wdrv_pic32mzw_ie.c</itemPath>
               </logicalFolder>
             </logicalFolder>
           </logicalFolder>
@@ -1361,6 +1367,7 @@
       <C32>
         <property key="additional-warnings" value="true"/>
         <property key="addresss-attribute-use" value="false"/>
+        <property key="appendMe" value=""/>
         <property key="enable-app-io" value="false"/>
         <property key="enable-omit-frame-pointer" value="false"/>
         <property key="enable-symbols" value="true"/>
@@ -1391,6 +1398,7 @@
         <property key="additional-options-chop-files" value="false"/>
       </C32-AR>
       <C32-AS>
+        <property key="appendMe" value=""/>
         <property key="assembler-symbols" value=""/>
         <property key="enable-symbols" value="true"/>
         <property key="exclude-floating-point-library" value="false"/>
@@ -1420,6 +1428,7 @@
         <property key="additional-options-use-response-files" value="false"/>
         <property key="additional-options-write-sla" value="false"/>
         <property key="allocate-dinit" value="false"/>
+        <property key="appendMe" value="-g"/>
         <property key="code-dinit" value="false"/>
         <property key="ebase-addr" value=""/>
         <property key="enable-check-sections" value="false"/>
@@ -1461,6 +1470,7 @@
       <C32CPP>
         <property key="additional-warnings" value="false"/>
         <property key="addresss-attribute-use" value="false"/>
+        <property key="appendMe" value=""/>
         <property key="check-new" value="false"/>
         <property key="eh-specs" value="true"/>
         <property key="enable-app-io" value="false"/>
